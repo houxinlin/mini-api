@@ -9,6 +9,11 @@ import com.hxl.miniapi.http.HttpRequestAdapter
 import com.hxl.miniapi.http.anno.param.RequestParam
 import com.hxl.miniapi.http.file.FilePart
 
+/**
+* @description: 解析FilePart
+* @date: 2022/10/5 上午5:46
+*/
+
 class FilePartArgumentResolver :ArgumentResolver{
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
         return parameterInfo.param.type.kotlin==FilePart::class
@@ -20,8 +25,8 @@ class FilePartArgumentResolver :ArgumentResolver{
         } else parameterInfo.parameterName
 
         if (request is HttpMultipartAdapter ) {
-            return request.getFilePart(argumentName) ?: throw ClientException("找不到文件", 400)
+            return request.getFilePart(argumentName) ?: ClientException.create400("找不到参数${argumentName}")
         }
-        return  ClientException("找不到文件",400)
+        return  ClientException.create400("不支持此请求")
     }
 }

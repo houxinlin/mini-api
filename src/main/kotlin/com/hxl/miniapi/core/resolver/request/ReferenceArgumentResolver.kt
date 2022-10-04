@@ -9,6 +9,12 @@ import com.hxl.miniapi.utils.isBaseType
 import java.lang.reflect.ParameterizedType
 import kotlin.reflect.full.isSuperclassOf
 
+
+/**
+* @description: 转换自定义数据类型
+* @date: 2022/10/5 上午6:04
+*/
+
 class ReferenceArgumentResolver(private val context: Context) :ArgumentResolver {
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
         return !(parameterInfo.param.type.isBaseType() || parameterInfo.param.type.isBaseType())

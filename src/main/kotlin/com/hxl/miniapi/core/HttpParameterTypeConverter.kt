@@ -2,8 +2,8 @@ package com.hxl.miniapi.core
 
 import com.hxl.miniapi.http.HttpRequestAdapter
 
-interface  HttpParameterTypeConverter<T>:TypeConverter<HttpRequestAdapter,T> {
+interface  HttpParameterTypeConverter<T>:TypeConverter<String,T> {
 
-     fun canConvert(methodParameter: MethodParameter,request: HttpRequestAdapter):Boolean
+     fun canConvert(methodParameter: MethodParameter,value: String):Boolean
 
 }

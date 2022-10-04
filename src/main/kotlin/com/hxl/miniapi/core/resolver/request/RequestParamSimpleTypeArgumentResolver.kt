@@ -14,35 +14,36 @@ import com.hxl.miniapi.utils.isString
 import com.hxl.miniapi.utils.urlArgumentToMap
 
 /**
-* @description: 支持参数到基础数据类型+String类型的转换
-* @date: 2022/10/4 上午6:06
-*/
+ * @description: 支持参数到基础数据类型+String类型的转换
+ * @date: 2022/10/4 上午6:06
+ */
 
 class RequestParamSimpleTypeArgumentResolver(private val context: Context) : ArgumentResolver {
     private val simpleTypeConverter = SimpleTypeConverter()
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
-        return  (parameterInfo.param.type.isBaseType() || parameterInfo.param.type.isString())
+        return (parameterInfo.param.type.isBaseType() || parameterInfo.param.type.isString())
     }
 
     override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {
         //获取要取得的参数名称
-       val argumentName = if (parameterInfo.hasAnnotation(RequestParam::class.java)){
-           parameterInfo.getAnnotation(RequestParam::class.java)!!.value
-       } else parameterInfo.parameterName
+        val argumentName = if (parameterInfo.hasAnnotation(RequestParam::class.java)) {
+            parameterInfo.getAnnotation(RequestParam::class.java)!!.value
+        } else parameterInfo.parameterName
         //get请求，从url中获取参数
-        if (request.getRequestMethod() == HttpMethod.GET){
-            return getArgumentFromUrl(request.getQueryPath(), argumentName, parameterInfo,request)
+        if (request.getRequestMethod() == HttpMethod.GET) {
+            return getArgumentFromUrl(request.getQueryPath(), argumentName, parameterInfo, request)
         }
         //post、put、delete、如果是x-www-form-urlencoded请求，从body中获取参数
         if ((request.getRequestMethod() != HttpMethod.GET) &&
-            request.getContentType() ==ContentType.WWW_FORM_URLENCODEED) {
+            request.getContentType() == ContentType.WWW_FORM_URLENCODEED
+        ) {
             val requestBody = request.requestBody.decodeToString()
-            return  getArgumentFromUrl(requestBody,argumentName,parameterInfo,request)
+            return getArgumentFromUrl(requestBody, argumentName, parameterInfo, request)
         }
-        if (request.getRequestMethod() !=HttpMethod.GET && request is HttpMultipartAdapter){
+        if (request.getRequestMethod() != HttpMethod.GET && request is HttpMultipartAdapter) {
             val propertys = MultipartParser(request.requestBody, request.getBoundary()).getPropertys()
-            if (propertys[argumentName]==null) throw  ClientException("${argumentName}不存在",400)
-            return  propertys[argumentName]
+            if (propertys[argumentName] == null) throw ClientException.create400("${argumentName}不存在")
+            return propertys[argumentName]
         }
 
         throw IllegalArgumentException("无法解析参数")
@@ -50,14 +51,19 @@ class RequestParamSimpleTypeArgumentResolver(private val context: Context) : Arg
 
     //
     /**
-    * @description: 从查询参数中获取目标参数创建对象并转换
-    * @date: 2022/10/3 下午10:56
-    */
+     * @description: 从查询参数中获取目标参数创建对象并转换
+     * @date: 2022/10/3 下午10:56
+     */
 
-    private fun getArgumentFromUrl(urlQuery: String, argumentName: String, methodParameter: MethodParameter,request: HttpRequestAdapter): Any? {
+    private fun getArgumentFromUrl(
+        urlQuery: String,
+        argumentName: String,
+        methodParameter: MethodParameter,
+        request: HttpRequestAdapter
+    ): Any? {
         val requireClassType = methodParameter.param.type
         val argumentValue = urlQuery.urlArgumentToMap()[argumentName]
-            ?: throw ClientException("参数${argumentName}不存在",HttpStatus.CLIENT_ERROR.code)
+            ?: throw ClientException.create400("参数${argumentName}不存在")
         //如果参数是String类型，则直接返回
         if (requireClassType.isString()) return argumentValue
         //如果参数是基本数据类型，则转换
@@ -66,10 +72,8 @@ class RequestParamSimpleTypeArgumentResolver(private val context: Context) : Arg
         }
 
         val httpParameterTypeConverter =
-            context.getHttpParameterTypeConverter().find { it.canConvert(methodParameter,request ) }
-                ?: throw ServerException("找不到参数转换器",HttpStatus.SUCCESS.code)
-
-        //自定义数据类型，则为null
+            context.getHttpParameterTypeConverter().find { it.canConvert(methodParameter, argumentValue) }
+                ?: throw ServerException.create500("找不到参数转换器")
         return httpParameterTypeConverter.typeConvert(request)
     }
 

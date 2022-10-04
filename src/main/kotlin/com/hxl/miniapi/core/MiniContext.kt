@@ -1,6 +1,7 @@
 package com.hxl.miniapi.core
 
 import com.hxl.miniapi.core.convert.GsonConvert
+import com.hxl.miniapi.core.convert.HttpParameteLocalDateTimeTypeConverter
 import com.hxl.miniapi.core.convert.HttpParameterDateTypeConverter
 import com.hxl.miniapi.core.convert.HttpParameterLocalDateTypeConverter
 import com.hxl.miniapi.core.io.FileResourceLoader
@@ -61,6 +62,7 @@ class MiniContext : Context {
         )
 
         addHttpParameterTypeConverter(
+            HttpParameteLocalDateTimeTypeConverter(),
             HttpParameterDateTypeConverter(),
             HttpParameterLocalDateTypeConverter(),
             HttpParameterLocalDateTypeConverter())
