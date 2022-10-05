@@ -6,6 +6,7 @@ import com.hxl.miniapi.core.MappingInfo
 import com.hxl.miniapi.core.MethodParameter
 import com.hxl.miniapi.http.HttpRequestAdapter
 import com.hxl.miniapi.utils.isBaseType
+import com.hxl.miniapi.utils.isString
 import java.lang.reflect.ParameterizedType
 import kotlin.reflect.full.isSuperclassOf
 
@@ -17,7 +18,7 @@ import kotlin.reflect.full.isSuperclassOf
 
 class ReferenceArgumentResolver(private val context: Context) :ArgumentResolver {
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
-        return !(parameterInfo.param.type.isBaseType() || parameterInfo.param.type.isBaseType())
+        return !(parameterInfo.param.type.isString() || parameterInfo.param.type.isBaseType())
     }
 
     override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {

@@ -21,7 +21,7 @@ import com.hxl.miniapi.utils.urlArgumentToMap
 class RequestParamSimpleTypeArgumentResolver(private val context: Context) : ArgumentResolver {
     private val simpleTypeConverter = SimpleTypeConverter()
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
-        return (parameterInfo.param.type.isBaseType() || parameterInfo.param.type.isString())
+        return parameterInfo.hasAnnotation (RequestParam::class.java) ||   (parameterInfo.param.type.isBaseType() || parameterInfo.param.type.isString())
     }
 
     override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {
@@ -73,8 +73,8 @@ class RequestParamSimpleTypeArgumentResolver(private val context: Context) : Arg
 
         val httpParameterTypeConverter =
             context.getHttpParameterTypeConverter().find { it.canConvert(methodParameter, argumentValue) }
-                ?: throw ServerException.create500("找不到参数转换器")
-        return httpParameterTypeConverter.typeConvert(request)
+                ?: throw ServerException.create500("找不到参数转换器$argumentName")
+        return httpParameterTypeConverter.typeConvert(argumentValue)
     }
 
 }

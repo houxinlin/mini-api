@@ -1,5 +1,6 @@
 package com.hxl.miniapi.core
 
+import com.hxl.miniapi.http.HttpRequestAdapter
 import com.sun.net.httpserver.HttpExchange
 
 fun interface HandlerMapping {
@@ -9,5 +10,5 @@ fun interface HandlerMapping {
     * @date: 2022/10/1 下午12:49
     */
 
-    fun handler(http: HttpExchange):Any
+    fun handler(httpRequestAdapter: HttpRequestAdapter):Any
 }

@@ -18,6 +18,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation("com.google.code.gson:gson:2.9.1")
     implementation("org.mybatis:mybatis:3.5.11")
+    implementation("mysql:mysql-connector-java:8.0.30")
 
 
 }

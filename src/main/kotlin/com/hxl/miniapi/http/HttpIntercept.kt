@@ -1,7 +1,5 @@
 package com.hxl.miniapi.http
 
-import com.sun.xml.internal.ws.transport.http.HttpAdapter
-
 /**
 * @description: 拦截器
 * @date: 2022/10/3 下午8:42
@@ -14,7 +12,7 @@ interface HttpIntercept {
     * @date: 2022/10/3 下午8:43
     */
 
-    fun intercept(httpAdapter: HttpAdapter):Boolean
+    fun intercept(httpAdapter: HttpRequestAdapter):Boolean
 
 
     /**
@@ -22,5 +20,5 @@ interface HttpIntercept {
     * @date: 2022/10/3 下午8:43
     */
 
-    fun postHandler(httpAdapter: HttpAdapter)
+    fun postHandler(httpAdapter: HttpRequestAdapter)
 }

@@ -1,5 +1,6 @@
 package com.hxl.miniapi.core
 
+import com.hxl.miniapi.http.HttpRequestAdapter
 import com.hxl.miniapi.utils.AntPathMatcher
 import com.sun.net.httpserver.HttpExchange
 
@@ -22,9 +23,9 @@ class RequestMappingHandlerMapping(private val context: Context) {
     fun removeMapping(mappingInfo: MappingInfo){
 
     }
-    fun getHandler(path:String,httpExchange: HttpExchange): HandlerMapping?{
+    fun getHandler(httpRequestAdapter: HttpRequestAdapter): HandlerMapping?{
         val mappingInfo = mappings.find {
-            pathMatcher.match(it.urlPatterns, path) && httpExchange.requestMethod==it.httpMethod.toString()
+            pathMatcher.match(it.urlPatterns, httpRequestAdapter.getRequestPath()) && httpRequestAdapter.getRequestMethod()==it.httpMethod
         }
         if (mappingInfo!=null) return HandlerMappingImpl(mappingInfo,context)
         return  null
