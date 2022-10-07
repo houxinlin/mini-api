@@ -18,16 +18,21 @@ abstract class ResultResolver {
 
     abstract fun support(data: Any?): Boolean
 
+    open fun getStatusCode(data: Any?): Int {
+        return HttpStatus.SUCCESS.code
+    }
 
     /**
      * @description: 转换
      * @date: 2022/10/3 下午9:02
      */
-    fun resolver(data: Any, httpExchange: HttpExchange) {
-        val value = resolverValue(data)
-        httpExchange.sendResponseHeaders(HttpStatus.SUCCESS.code, value.size.toLong())
-        httpExchange.responseHeaders.set("Content-Type", getContentType().contentType)
-        httpExchange.responseHeaders.set("Content-Length",value.size.toString())
+    fun resolver(data: Any?, httpExchange: HttpExchange) {
+        var value = resolverValue(data)
+        if (value == null) value = ByteArray(0)
+
+        httpExchange.responseHeaders.set("Content-Type", getContentType(data).contentType)
+        httpExchange.responseHeaders.set("Content-Length", value.size.toString())
+        httpExchange.sendResponseHeaders(getStatusCode(data), value.size.toLong())
         httpExchange.responseBody.run {
             write(value)
             close()
@@ -39,7 +44,7 @@ abstract class ResultResolver {
      * @description: 交给具体子类
      * @date: 2022/10/5 上午4:31
      */
-    protected abstract fun resolverValue(data: Any): ByteArray
+    protected abstract fun resolverValue(data: Any?): ByteArray?
 
 
     /**
@@ -47,5 +52,5 @@ abstract class ResultResolver {
      * @date: 2022/10/5 上午4:31
      */
 
-    abstract fun getContentType(): ContentType
+    abstract fun getContentType(data: Any?): ContentType
 }

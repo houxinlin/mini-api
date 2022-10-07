@@ -306,16 +306,12 @@ class AntPathMatcher {
                 if (matcher.matches()) {
                     if (uriTemplateVariables != null) {
                         require(variableNames.size == matcher.groupCount()) {
-                            "The number of capturing groups in the pattern segment " +
-                                    rawPattern + " does not match the number of URI template variables it defines, " +
-                                    "which can occur if capturing groups are used in a URI template regex. " +
-                                    "Use non-capturing groups instead."
+                            ""
                         }
                         for (i in 1..matcher.groupCount()) {
                             val name = variableNames[i - 1]
                             require(!name.startsWith("*")) {
-                                "Capturing patterns (" + name + ") are not " +
-                                        "supported by the AntPathMatcher. Use the PathPatternParser instead."
+                                ""
                             }
                             val value = matcher.group(i)
                             uriTemplateVariables[name] = value

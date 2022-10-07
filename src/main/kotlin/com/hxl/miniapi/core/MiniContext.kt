@@ -20,6 +20,7 @@ import com.hxl.miniapi.orm.MybatisCrudRepository
 import com.hxl.miniapi.utils.*
 import org.objectweb.asm.ClassReader
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.net.URL
 import javax.sql.DataSource
 
@@ -65,20 +66,36 @@ open class MiniContext : Context {
      */
     private var authentication: MiniAuthentication? = null
 
+    /**
+     * 数据源
+     */
     private var dataSource: DataSource? = null
 
+    /**
+     * 所有component类
+     */
+    private val componentClass: MutableList<Class<*>> = mutableListOf()
+
+    /**
+     * 所有bean实例
+     */
+    private val beans = mutableMapOf<Class<*>, Any>()
+
+    private val fileResourceLoader =FileResourceLoader()
+    private val jarResourceLoader =JarResourceLoader()
     init {
-        addArgumentResolvers(
+        addArgumentResolvers(false,
             SessionArgumentResolver(),
+            RequestUriArgumentResolver(),
             FilePartArgumentResolver(),
             PathVariableArgumentResolver(),
+            RequestBodyArgumentResolver(this),
             RequestParamSimpleTypeArgumentResolver(this),
-            RequestUriArgumentResolver(),
-            ReferenceArgumentResolver(this),
         )
 
         //用于将String到T类型
         addHttpParameterTypeConverter(
+            false,
             HttpParameteLocalDateTimeTypeConverter(),
             HttpParameterDateTypeConverter(),
             HttpParameterLocalDateTypeConverter(),
@@ -86,13 +103,12 @@ open class MiniContext : Context {
         )
 
         addResultResolvers(
-            NothingResponseResolver(),
+            false,
             StringResultResolver(),
             InputStreamResulResolver(),
             SimpleTypeResultResolver(),
-            JsonResultResolver(this.jsonConvert)
-        )
-
+            HttpStatusResponseResolver(this.jsonConvert),
+            JsonResultResolver(this.jsonConvert))
     }
 
     override fun getArgumentResolvers(): List<ArgumentResolver> {
@@ -111,30 +127,23 @@ open class MiniContext : Context {
         return this.httpIntercepts
     }
 
-    /**
-     * 所有component类
-     */
-    private val componentClass: MutableList<Class<*>> = mutableListOf()
-
-    /**
-     * 所有bean实例
-     */
-    private val beans = mutableMapOf<Class<*>, Any>()
-
     override fun createWebServer(): WebServer {
         return CoolMiniWebServerImpl(this)
     }
 
     override fun refresh(start: Class<*>) {
         componentClass.clear()
-        val resources = ClassLoader.getSystemClassLoader().getResources(start.`package`.name.replace(".", "/"))
+
+        val packageInfo = start.`package`
+        val name =if (packageInfo==null) "" else packageInfo.name
+        val resources = ClassLoader.getSystemClassLoader().getResources(name.replace(".","/"))
         val classResources = mutableListOf<URL>()
         for (resource in resources) {
             if (URL_PROTOCOL_FILE == resource.protocol) {
-                classResources.addAll(FileResourceLoader().getResources(resource.file))
+                classResources.addAll(fileResourceLoader.getResources(resource.file))
             }
             if (URL_PROTOCOL_JAR == resource.protocol) {
-                classResources.addAll(JarResourceLoader().getResources(resource.file))
+                classResources.addAll(jarResourceLoader.getResources(resource.file))
             }
         }
         findComponentClass(classResources)
@@ -146,20 +155,21 @@ open class MiniContext : Context {
 
 
     /**
-    * @description: 依赖注入
-    * @date: 2022/10/6 上午6:36
-    */
+     * @description: 依赖注入
+     * @date: 2022/10/6 上午6:36
+     */
 
-    private fun autowriteInjection(bean:Any) {
-        if (dataSource==null) return
+    private fun autowriteInjection(bean: Any) {
+        if (dataSource == null)  return
         val mybatis = MybatisCrudRepository(Mybatis(dataSource!!))
 
         val beanFields = bean::class.java.declaredFields
         beanFields.forEach {
-            if (it.getDeclaredAnnotation(AutowriteCrud::class.java)!=null &&
-                BaseCrudRepository::class.java.isAssignableFrom(it.type)){
-                it.isAccessible=true
-                it.set(bean,mybatis)
+            if (it.getDeclaredAnnotation(AutowriteCrud::class.java) != null &&
+                !Modifier.isFinal(it.modifiers) &&
+                BaseCrudRepository::class.java.isAssignableFrom(it.type)) {
+                it.isAccessible = true
+                it.set(bean, mybatis)
             }
         }
 
@@ -180,9 +190,9 @@ open class MiniContext : Context {
 
 
     /**
-    * @description: 提取并注册Mapping方法
-    * @date: 2022/10/6 上午6:34
-    */
+     * @description: 提取并注册Mapping方法
+     * @date: 2022/10/6 上午6:34
+     */
 
     private fun extractMappingMethod(method: Method) {
         if (method.declaringClass != Any::class.java) {
@@ -214,6 +224,7 @@ open class MiniContext : Context {
         for (classResource in classResources) {
             val classNode = org.objectweb.asm.tree.ClassNode()
             ClassReader(classResource.openConnection().getInputStream()).accept(classNode, ClassReader.EXPAND_FRAMES)
+            if ( classNode.visibleAnnotations==null) continue
             classNode.visibleAnnotations.forEach {
                 if (COMPONENT_CLASS.contains(it.desc)) {
                     componentClass.add(classNode.name.toClass())
@@ -222,12 +233,12 @@ open class MiniContext : Context {
         }
     }
 
-    override fun addArgumentResolvers(vararg argumentResolvers: ArgumentResolver) {
-        argumentResolvers.forEach { this.argumentResolvers.add(it) }
+    override fun addArgumentResolvers(first: Boolean,vararg argumentResolvers: ArgumentResolver) {
+        argumentResolvers.forEach { if (first)  this.argumentResolvers.add(0,it)else  this.argumentResolvers.add(it) }
     }
 
-    override fun addResultResolvers(vararg resultResolver: ResultResolver) {
-        resultResolver.forEach { this.resultResolver.add(it) }
+    override fun addResultResolvers(first: Boolean,vararg resultResolver: ResultResolver) {
+        resultResolver.forEach { if (first)  this.resultResolver.add(0,it)else  this.resultResolver.add(it) }
     }
 
     override fun getResultResolvers(): List<ResultResolver> {
@@ -242,8 +253,8 @@ open class MiniContext : Context {
         return this.jsonConvert
     }
 
-    override fun addHttpParameterTypeConverter(vararg httpParameterTypeConverter: HttpParameterTypeConverter<*>) {
-        httpParameterTypeConverter.forEach { this.httpParameterTypeConverter.add(it) }
+    override fun addHttpParameterTypeConverter(first: Boolean, vararg httpParameterTypeConverter: HttpParameterTypeConverter<*>) {
+        httpParameterTypeConverter.forEach {if (first) this.httpParameterTypeConverter.add(0,it) else  this.httpParameterTypeConverter.add(it) }
     }
 
     override fun getHttpParameterTypeConverter(): List<HttpParameterTypeConverter<*>> {
@@ -263,7 +274,7 @@ open class MiniContext : Context {
     }
 
     override fun setDataSource(dataSource: DataSource) {
-        this.dataSource =dataSource
+        this.dataSource = dataSource
     }
 
     override fun getAuthorization(): MiniAuthentication? {

@@ -24,6 +24,9 @@ class Mybatis(private val dataSource: DataSource) {
     private val connection = session.connection
     private val executor = configuration.newExecutor(transactionFactory.newTransaction(connection))
 
+    init {
+        configuration.isMapUnderscoreToCamelCase=true
+    }
     fun <T> getMapper(type: Class<T>): T {
         if (!configuration.hasMapper(type)) configuration.addMapper(type)
         return configuration.getMapper(type, session)
@@ -36,9 +39,6 @@ class Mybatis(private val dataSource: DataSource) {
         return statementHandler.query<Map<K, V>>(stmt, defaultResultHandler)
     }
 
-    private fun createResultMap(querySql: String, ofClass: Class<*>): ResultMap {
-        return ResultMap.Builder(configuration, querySql, ofClass, mutableListOf()).build()
-    }
 
     fun <T> queryFormList(querySql: String, ofClass: Class<T>): List<T>? {
         val statementHandler = createStatementHandler(querySql, ofClass, SqlCommandType.SELECT)
@@ -51,6 +51,10 @@ class Mybatis(private val dataSource: DataSource) {
         val statementHandler = createStatementHandler(querySql, Int::class.java, SqlCommandType.UPDATE)
         val stmt = statementHandler.prepare(connection, 2000)
         return statementHandler.update(stmt)
+    }
+    private fun createResultMap(querySql: String, ofClass: Class<*>): ResultMap {
+        return ResultMap.Builder(configuration, querySql, ofClass, mutableListOf())
+            .build()
     }
 
     private fun createStatementHandler(

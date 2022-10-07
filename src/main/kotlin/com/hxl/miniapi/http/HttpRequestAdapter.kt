@@ -14,12 +14,14 @@ open class HttpRequestAdapter(private val httpExchange: HttpExchange) {
     val requestBody = httpExchange.requestBody.buffered().readBytes()
 
     private var responseMessage: ResponseMessage? = null
+
     fun getRequestPath(): String {
-        return httpExchange.requestURI.toString().removeSuffix("/")
+        return httpExchange.requestURI.path.toString().removeSuffix("/")
     }
 
     fun getQueryPath(): String {
-        return httpExchange.requestURI.query
+        val requestURI = httpExchange.requestURI
+        return if (requestURI.query==null) "" else requestURI.query
     }
 
     fun getRequestMethod(): HttpMethod {
@@ -53,27 +55,45 @@ open class HttpRequestAdapter(private val httpExchange: HttpExchange) {
 
     fun getContentType(): ContentType? {
         val contentType = getStringContentType() ?: return null
-        if (contentType.equals(ContentType.TEXT_PLAIN.contentType,ignoreCase = false)) return ContentType.TEXT_PLAIN
-        if (contentType.equals(ContentType.APPLICATION_JSON.contentType,ignoreCase = false)) return ContentType.APPLICATION_JSON
-        if (contentType.equals(ContentType.WWW_FORM_URLENCODEED.contentType,ignoreCase = false)) return ContentType.WWW_FORM_URLENCODEED
-        if (contentType.equals(ContentType.FORM_DATA.contentType,ignoreCase = false)) return ContentType.FORM_DATA
+        if (contentType.equals(ContentType.TEXT_PLAIN.contentType, ignoreCase = false)) return ContentType.TEXT_PLAIN
+        if (contentType.equals(
+                ContentType.APPLICATION_JSON.contentType,
+                ignoreCase = false
+            )
+        ) return ContentType.APPLICATION_JSON
+        if (contentType.equals(
+                ContentType.WWW_FORM_URLENCODEED.contentType,
+                ignoreCase = false
+            )
+        ) return ContentType.WWW_FORM_URLENCODEED
+        if (contentType.equals(ContentType.FORM_DATA.contentType, ignoreCase = false)) return ContentType.FORM_DATA
         return null
     }
 
     private fun getSessionId(): String? {
         val cookie = httpExchange.requestHeaders.getFirst("Cookie") ?: return null
-        val matcher = Pattern.compile("$SESSION_ID=(.+);").matcher(cookie)
-        if (matcher.find()) return matcher.group(1)
+        val matcher = Pattern.compile("(.*?)=(.*?)(\$|;|,(?! ))").matcher(cookie)
+        while (matcher.find()) {
+            if (matcher.group(1) == SESSION_ID) return matcher.group(2)
+        }
         return null
     }
 
     fun getSession(): Session {
         //如果当前客户端存在sessionId，从SessionManager中获取
-        getSessionId()?.run { return SessionManager.getSession(this) }
+        var sessionId = getSessionId() //Cookie存在SessionID
+        if (!sessionId.isNullOrBlank()) {
+            val session = SessionManager.getSession(sessionId)
+            if (session != null) return session
+        }
         //没有sessionId情况
-        val sessionId = SessionManager.newSession()
-        httpExchange.responseHeaders.set("Cookie", "$SESSION_ID=$sessionId;")
-        return SessionManager.getSession(sessionId)
+        sessionId = SessionManager.newSession().getSessionId()
+        setResponseCookie(httpExchange, sessionId)
+        return SessionManager.getSession(sessionId)!!
+    }
+
+    private fun setResponseCookie(httpExchange: HttpExchange, sessionId: String) {
+        httpExchange.responseHeaders.set("Set-Cookie", "$SESSION_ID=$sessionId;Path=/")
     }
 
 
@@ -82,10 +102,19 @@ open class HttpRequestAdapter(private val httpExchange: HttpExchange) {
      * @date: 2022/10/5 下午7:02
      */
 
-    fun setResponse( data: Any,header: Map<String, String> = mutableMapOf()) {
-        this.responseMessage = ResponseMessage(header, data)
+    fun setResponse(data: Any, header: Map<String, String> = mutableMapOf(), code: Int = 200) {
+        this.responseMessage = ResponseMessage(header, BeanHttpResponse(code, data))
     }
-    fun getResponse():ResponseMessage?{
+
+    fun setResponse(data: Any, header: Map<String, String> = mutableMapOf()) {
+        this.responseMessage = ResponseMessage(header, BeanHttpResponse(200, data))
+    }
+
+    fun setResponse(data: Any) {
+        this.responseMessage = ResponseMessage(mutableMapOf(), BeanHttpResponse(200, data))
+    }
+
+    fun getResponse(): ResponseMessage? {
         return this.responseMessage
     }
 

@@ -28,7 +28,7 @@ interface  Context {
     * @date: 2022/10/1 上午10:37
     */
 
-    fun addArgumentResolvers(vararg argumentResolvers: ArgumentResolver)
+    fun addArgumentResolvers(first: Boolean=false,vararg argumentResolvers: ArgumentResolver)
 
 
 
@@ -37,7 +37,7 @@ interface  Context {
     * @date: 2022/10/1 上午10:37
     */
 
-    fun addResultResolvers(vararg resultResolver: ResultResolver)
+    fun addResultResolvers(first: Boolean=false,vararg resultResolver: ResultResolver)
 
 
     fun getResultResolvers():List<ResultResolver>
@@ -89,7 +89,7 @@ interface  Context {
     * @date: 2022/10/5 上午6:28
     */
 
-    fun addHttpParameterTypeConverter(vararg httpParameterTypeConverter: HttpParameterTypeConverter<*>)
+    fun addHttpParameterTypeConverter(first: Boolean=false,vararg httpParameterTypeConverter: HttpParameterTypeConverter<*>)
 
 
     /**

@@ -1,48 +1,70 @@
 package com.hxl.miniapi.http.session
 
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.DelayQueue
+import java.util.concurrent.Delayed
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 object SessionManager {
-    private val sessionMap =ConcurrentHashMap<String,Session>()
+
+
+    private val sessionMap = ConcurrentHashMap<String, Session>()
+
+    init {
+        thread {
+            //删除过期的key
+            while (true) {
+                val sessionList = sessionMap.values.filter { it.getTnvalidTime() < System.currentTimeMillis() }
+                sessionList.forEach {
+                    removeSession(it.getSessionId())
+                }
+            }
+        }
+    }
+     fun removeSession(sessionId:String){
+         sessionMap.remove(sessionId)
+     }
 
     /**
-    * @description: 创建sessionId
-    * @date: 2022/10/5 下午5:08
-    */
+     * @description: 创建sessionId
+     * @date: 2022/10/5 下午5:08
+     */
 
-    private fun createSessionId():String{
+    private fun createSessionId(): String {
         return UUID.randomUUID().toString()
     }
 
 
     /**
-    * @description: 新增session
-    * @date: 2022/10/5 下午5:08
-    */
+     * @description: 新增session
+     * @date: 2022/10/5 下午5:08
+     */
 
-    private fun putSession(sessionId:String, session: Session){
-        sessionMap[sessionId] =session
+    private fun putSession(sessionId: String, session: Session): Session {
+        sessionMap[sessionId] = session
+        return session
     }
 
     /**
-    * @description: 获取session，如果不存在则创建新的session
-    * @date: 2022/10/5 下午5:07
-    */
+     * @description: 获取session，如果不存在则创建新的session
+     * @date: 2022/10/5 下午5:07
+     */
 
-    fun getSession(sessionId: String):Session{
-        return sessionMap.getOrPut(sessionId) { SessionImpl(sessionId) }
+    fun getSession(sessionId: String): Session? {
+        if (sessionMap.containsKey(sessionId)) return sessionMap[sessionId]!!
+        return null
     }
 
 
     /**
-    * @description: 创建新的session
-    * @date: 2022/10/5 下午5:07
-    */
+     * @description: 创建新的session
+     * @date: 2022/10/5 下午5:07
+     */
 
-    fun newSession():String {
+    fun newSession(): Session {
         val sessionId = createSessionId()
-        putSession(sessionId,SessionImpl(sessionId))
-        return  sessionId
+        return putSession(sessionId, SessionImpl(sessionId))
     }
 }

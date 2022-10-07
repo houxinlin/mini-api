@@ -4,24 +4,34 @@ import com.hxl.miniapi.core.ArgumentResolver
 import com.hxl.miniapi.core.Context
 import com.hxl.miniapi.core.MappingInfo
 import com.hxl.miniapi.core.MethodParameter
+import com.hxl.miniapi.core.convert.SimpleTypeConverter
+import com.hxl.miniapi.core.exception.ClientException
+import com.hxl.miniapi.http.HttpMethod
 import com.hxl.miniapi.http.HttpRequestAdapter
+import com.hxl.miniapi.http.anno.param.RequestBody
 import com.hxl.miniapi.utils.isBaseType
 import com.hxl.miniapi.utils.isString
 import java.lang.reflect.ParameterizedType
 import kotlin.reflect.full.isSuperclassOf
 
-
-/**
-* @description: 转换自定义数据类型
-* @date: 2022/10/5 上午6:04
-*/
-
-class ReferenceArgumentResolver(private val context: Context) :ArgumentResolver {
+class RequestBodyArgumentResolver(private val context: Context):ArgumentResolver {
+    private val simpleTypeArgumentResolver  =SimpleTypeConverter()
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
-        return !(parameterInfo.param.type.isString() || parameterInfo.param.type.isBaseType())
+        return request.getRequestMethod()!= HttpMethod.GET &&
+                parameterInfo.hasAnnotation(RequestBody::class.java)
+
     }
 
     override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {
+        if (request.requestBody.isEmpty()) throw ClientException.create400("请求体为空")
+        //字符直接返回
+        if (parameterInfo.param.type.isString()) return request.requestBody.decodeToString()
+
+        //基本数据类型转换
+        if (parameterInfo.param.type.isBaseType())
+            return simpleTypeArgumentResolver.typeConvert(parameterInfo.param.type,request.requestBody.decodeToString())
+
+        //如果是Lits类型
         if (List::class.isSuperclassOf(parameterInfo.param.type.kotlin)){
             //泛型参数
             val genericParameterTypes = parameterInfo.method.genericParameterTypes
@@ -33,5 +43,6 @@ class ReferenceArgumentResolver(private val context: Context) :ArgumentResolver 
             return context.getJsonConvert().fromJsonList(request.requestBody.decodeToString(),Class.forName(genericTypeName))
         }
         return context.getJsonConvert().fromJson(request.requestBody.decodeToString(),parameterInfo.param.type)
+
     }
 }

@@ -9,13 +9,13 @@ class InputStreamResulResolver: ResultResolver() {
         return data!=null && ( data is ByteArray ||  data is InputStream)
     }
 
-    override fun resolverValue(data: Any): ByteArray {
+    override fun resolverValue(data: Any?): ByteArray {
         if (data is ByteArray) return  data
         if (data is InputStream) return  data.readBytes()
         return null!!
     }
 
-    override fun getContentType(): ContentType {
+    override fun getContentType(data: Any?): ContentType {
         return ContentType.APPLICATION_STREAM
     }
 }

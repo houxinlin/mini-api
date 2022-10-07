@@ -1,6 +1,5 @@
 package com.hxl.miniapi.core
 
-import com.hxl.miniapi.http.anno.param.RequestParam
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 

@@ -15,6 +15,10 @@ class KotlinExtent {
 fun String.addPrefixIfMiss(prefix: String): String {
     return if (this.startsWith(prefix)) this else "$prefix$this"
 }
+fun String.toClass():Class<*>{
+    return Class.forName(this.replace("/","."))
+}
+
 fun String.urlArgumentToMap():Map<String,String>{
     val map = mutableMapOf<String,String>()
     this.split("&").map { it.split("=") }.forEach { if (it.size==2)  map[it[0]]=URLDecoder.decode(it[1],"utf-8") }
@@ -52,7 +56,9 @@ fun Class<*>.isBaseType():Boolean{
 fun Class<*>.isString():Boolean{
     return this.kotlin==String::class
 }
-
+fun Class<*>.instance():Any{
+    return this.getConstructor().newInstance()
+}
 //annotation-----------------------------
 
 fun Annotation.getDefaultValue(): String {

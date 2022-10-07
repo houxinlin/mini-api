@@ -15,5 +15,13 @@ interface Session {
 
     fun getSessionId():String
 
+    fun setTnvalidTime(value:Long)
+
+    fun getTnvalidTime():Long
+
+    fun removeAttribute(key:String)
+
+
+    fun getAttributeKeys():Set<String>
 
 }

@@ -9,6 +9,7 @@ import com.hxl.miniapi.core.exception.ClientException
 import com.hxl.miniapi.core.exception.ServerException
 import com.hxl.miniapi.http.*
 import com.hxl.miniapi.http.anno.param.RequestParam
+import com.hxl.miniapi.http.session.Session
 import com.hxl.miniapi.utils.isBaseType
 import com.hxl.miniapi.utils.isString
 import com.hxl.miniapi.utils.urlArgumentToMap
@@ -21,7 +22,7 @@ import com.hxl.miniapi.utils.urlArgumentToMap
 class RequestParamSimpleTypeArgumentResolver(private val context: Context) : ArgumentResolver {
     private val simpleTypeConverter = SimpleTypeConverter()
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
-        return parameterInfo.hasAnnotation (RequestParam::class.java) ||   (parameterInfo.param.type.isBaseType() || parameterInfo.param.type.isString())
+        return parameterInfo.hasAnnotation (RequestParam::class.java) && parameterInfo.param.type!=Session::class.java
     }
 
     override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {

@@ -1,6 +1,9 @@
 package com.hxl.miniapi.http
 
-import com.hxl.miniapi.core.Context
-import com.sun.net.httpserver.HttpExchange
+
+/**
+* @description: Http响应接口
+* @date: 2022/10/5 上午10:59
+*/
 
 interface  HttpResponse

@@ -6,15 +6,14 @@ import com.hxl.miniapi.utils.isBaseType
 
 class SimpleTypeResultResolver :ResultResolver(){
     override fun support(data: Any?): Boolean {
-        if (data==null) return false
-        return data::class.java.isBaseType()
+        return data!=null && data::class.java.isBaseType()
     }
 
-    override fun resolverValue(data: Any): ByteArray {
+    override fun resolverValue(data: Any?): ByteArray {
         return data.toString().toByteArray()
     }
 
-    override fun getContentType(): ContentType {
+    override fun getContentType(data: Any?): ContentType {
         return ContentType.TEXT_PLAIN
     }
 }

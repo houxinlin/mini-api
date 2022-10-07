@@ -8,7 +8,6 @@ class HttpMultipartAdapter(private val httpExchange: HttpExchange) : HttpRequest
     private val multipartParser = MultipartParser(requestBody, getBoundary())
     fun getBoundary(): String {
         val contentTypeValue = getStringContentType() ?: throw ClientException.create400("客户端请求格式错误")
-
         return "--${contentTypeValue.substring(contentTypeValue.indexOf("boundary=")+9)}"
     }
 

@@ -77,8 +77,7 @@ object StringUtils {
                 tokens.add(token)
             }
         }
-        var toStringArray = toStringArray(tokens)
-        return toStringArray
+        return toStringArray(tokens)
     }
 
 }

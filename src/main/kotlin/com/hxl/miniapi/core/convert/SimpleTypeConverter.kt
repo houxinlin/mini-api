@@ -1,19 +1,20 @@
 package com.hxl.miniapi.core.convert
 
 import com.hxl.miniapi.utils.isString
+import kotlin.reflect.KClass
 
 class SimpleTypeConverter {
     fun typeConvert(requireClass: Class<*>, value: String): Any {
         if (requireClass.isString()) return value
-        return typeConversters[requireClass]!!.invoke(value)
+        return typeConversters[requireClass.kotlin]!!.invoke(value)
     }
 
-    private val typeConversters: MutableMap<Class<*>, (String) -> Any> = mutableMapOf(
-        Int::class.java to { it.toInt() },
-        Short::class.java to { it.toShort() },
-        Float::class.java to { it.toFloat() },
-        Double::class.java to { it.toDouble() },
-        Boolean::class.java to {
+    private val typeConversters: MutableMap<KClass<*>, (String) -> Any> = mutableMapOf(
+        Int::class to { it.toInt() },
+        Short::class to { it.toShort() },
+        Float::class to { it.toFloat() },
+        Double::class to { it.toDouble() },
+        Boolean::class to {
             if (it.lowercase() == "true" || it.lowercase() == "false") {
                 it.toBoolean()
 
@@ -26,9 +27,9 @@ class SimpleTypeConverter {
             }
 
         },
-        Byte::class.java to { it.toByte() },
-        Long::class.java to { it.toLong() },
-        Char::class.java to {
+        Byte::class to { it.toByte() },
+        Long::class to { it.toLong() },
+        Char::class to {
             if (it.isNotEmpty()) {
                 it.toCharArray()[0]
             } else {

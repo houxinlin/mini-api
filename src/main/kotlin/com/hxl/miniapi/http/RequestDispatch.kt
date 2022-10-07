@@ -8,13 +8,15 @@ import com.hxl.miniapi.core.exception.ServerException
 import com.hxl.miniapi.utils.startWhithPlus
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
+import java.time.LocalDateTime
+import java.util.logging.Logger
 
 
 class RequestDispatch(private val context: Context) : HttpHandler {
+    private val logger: Logger = Logger.getLogger(RequestDispatch::class.java.name)
     override fun handle(http: HttpExchange) {
         try {
             val requestAdapter = if (isFormDataRequest(http)) HttpMultipartAdapter(http) else HttpRequestAdapter(http)
-            requestAdapter.getSession()//初始化session
             //1.default
             if (context.getAuthorization() == null) return doHandler(requestAdapter, http)
 
@@ -32,12 +34,12 @@ class RequestDispatch(private val context: Context) : HttpHandler {
                 if (requestAdapter.getResponse() != null) {
                     return handlerResponse(requestAdapter.getResponse()!!.data, http)
                 }
-                return handlerResponse(NothingResponse(), http)
+                return handlerResponse(InterceptResponse(), http)
             }
             //true则不拦截
             doHandler(requestAdapter, http)
         } catch (e: Exception) {
-            e.printStackTrace()
+            if (e !is HttpException) e.printStackTrace()
             handlerError(http, e)
         }
     }
@@ -46,14 +48,14 @@ class RequestDispatch(private val context: Context) : HttpHandler {
         header.forEach { (key, value) -> httpExchange.responseHeaders.add(key, value) }
     }
 
+
     private fun doHandler(requestAdapter: HttpRequestAdapter, http: HttpExchange) {
         val handler: HandlerMapping = context.getRequestMappingHandlerMapping().getHandler(requestAdapter)
-            ?: throw throw ClientException.create400("找不到处理器")
-        //结果处理器
+            ?: throw throw ClientException.create404("请求${requestAdapter.getRequestMethod()} ${requestAdapter.getRequestPath()}找不到映射")
         val handlerResult = handler.handler(requestAdapter)
-        //处理
         requestAdapter.getResponse()?.run { setHttpHeader(http, this.header) }
-        //如果用户用过setResponse方法设置响应，测优先返回此数据
+        //如果用户用过setResponse方法设置响应，则优先返回此数据
+        //此处是拦截器产生
         if (requestAdapter.getResponse() != null) {
             return handlerResponse(requestAdapter.getResponse()!!.data, http)
         }
@@ -67,7 +69,7 @@ class RequestDispatch(private val context: Context) : HttpHandler {
                 return resultResolver.resolver(result, http)
             }
         }
-        throw ServerException.create500("无法转换结果")
+        throw ServerException.create500("结果无法正确响应")
     }
 
     private fun isFormDataRequest(httpExchange: HttpExchange): Boolean {
@@ -77,13 +79,25 @@ class RequestDispatch(private val context: Context) : HttpHandler {
     }
 
     private fun handlerError(http: HttpExchange, e: Exception) {
-        val message = e.message!!
-        if (e is HttpException) {
-            http.sendResponseHeaders(e.code, message.length.toLong())
-        } else {
-            http.sendResponseHeaders(500, message.length.toLong())
-        }
-        http.responseBody.write(message.toByteArray())
+        if (e !is HttpException)  return handlerServerError(http,e)
+        //如果是能处理的异常，
+        logger.warning(e.message)
+        http.responseHeaders.set("Content-Type",ContentType.TEXT_PLAIN.contentType)
+        http.sendResponseHeaders(e.code,0)
+        http.responseBody.write(ByteArray(0))
+        http.responseBody.close()
+    }
+
+    private fun handlerServerError(http: HttpExchange, e: Exception) {
+        val result = mutableMapOf<String, Any>(
+            "timestamp" to LocalDateTime.now().toString(),
+            "status" to 500,
+            "error" to "Internal Server Error"
+        )
+        http.responseHeaders.set("Content-Type",ContentType.APPLICATION_JSON.contentType)
+        val json :String= context.getJsonConvert().toJson(result)!!
+        http.sendResponseHeaders(500,json.length.toLong())
+        http.responseBody.write(json.toByteArray())
         http.responseBody.close()
     }
 }

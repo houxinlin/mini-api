@@ -1,6 +1,7 @@
 package com.hxl.miniapi.core
 
 import com.hxl.miniapi.http.HttpRequestAdapter
+import com.hxl.miniapi.http.InterceptResponse
 import com.hxl.miniapi.http.NothingResponse
 import java.lang.reflect.Parameter
 
@@ -25,12 +26,12 @@ class HandlerMappingImpl(private val mappingInfo: MappingInfo, private val conte
         val httpIntercept = context.getHttpIntercept().find { it.intercept(requestAdapter) }
         if (httpIntercept != null) {
             httpIntercept.postHandler(requestAdapter)
-            return NothingResponse()
+            return InterceptResponse()
         }
         val methodArg = mutableListOf<Any?>()
         for (parameterInfo in parameterInfos) {
             val argumentResolvers = findArgumentResolvers(parameterInfo, requestAdapter)
-                ?: throw IllegalStateException("没有找到参数解析器")
+                ?: throw IllegalStateException("找不到参数解析器 ${parameterInfo.parameterName} ${parameterInfo.param.type}")
             methodArg.add(argumentResolvers.resolver(parameterInfo, requestAdapter, mappingInfo))
         }
         val invokeResult: Any? = if (mappingInfo.method.parameterCount == 0) {
