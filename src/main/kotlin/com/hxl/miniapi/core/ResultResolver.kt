@@ -30,7 +30,7 @@ abstract class ResultResolver {
         var value = resolverValue(data)
         if (value == null) value = ByteArray(0)
 
-        httpExchange.responseHeaders.set("Content-Type", getContentType(data).contentType)
+        httpExchange.responseHeaders.set("Content-Type", applyCharset(getContentType(data).contentType))
         httpExchange.responseHeaders.set("Content-Length", value.size.toString())
         httpExchange.sendResponseHeaders(getStatusCode(data), value.size.toLong())
         httpExchange.responseBody.run {
@@ -39,6 +39,10 @@ abstract class ResultResolver {
         }
     }
 
+    private fun applyCharset(contentType: String):String{
+        if (contentType.endsWith(";"))return "$contentType charset=utf-8"
+        return "$contentType; charset=utf-8"
+    }
 
     /**
      * @description: 交给具体子类

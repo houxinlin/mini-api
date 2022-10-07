@@ -9,8 +9,8 @@ import com.hxl.miniapi.core.io.FileResourceLoader
 import com.hxl.miniapi.core.io.JarResourceLoader
 import com.hxl.miniapi.core.resolver.request.*
 import com.hxl.miniapi.core.resolver.response.*
-import com.hxl.miniapi.http.anno.RestController
 import com.hxl.miniapi.http.HttpIntercept
+import com.hxl.miniapi.http.anno.RestController
 import com.hxl.miniapi.http.server.CoolMiniWebServerImpl
 import com.hxl.miniapi.http.server.WebServer
 import com.hxl.miniapi.orm.AutowriteCrud
@@ -19,6 +19,9 @@ import com.hxl.miniapi.orm.Mybatis
 import com.hxl.miniapi.orm.MybatisCrudRepository
 import com.hxl.miniapi.utils.*
 import org.objectweb.asm.ClassReader
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.net.URL
@@ -84,7 +87,8 @@ open class MiniContext : Context {
     private val fileResourceLoader =FileResourceLoader()
     private val jarResourceLoader =JarResourceLoader()
     init {
-        addArgumentResolvers(false,
+        addArgumentResolvers(
+            false,
             SessionArgumentResolver(),
             RequestUriArgumentResolver(),
             FilePartArgumentResolver(),
@@ -150,7 +154,24 @@ open class MiniContext : Context {
         registerIfRequestMapping()
         //如果存在数据源配置，则自动注入依赖
         this.beans.values.forEach(this::autowriteInjection)
+        invokeBeanInitMethod()
 
+    }
+
+
+    /**
+    * @description: 调用对象init方法
+    * @date: 2022/10/7 上午10:01
+    */
+
+    private fun invokeBeanInitMethod() {
+        for (bean in this.beans.values) {
+           try {
+               val initMethodHandle =
+                   MethodHandles.lookup().findVirtual(bean::class.java, "init", MethodType.methodType(Void.TYPE))
+               initMethodHandle.invoke(bean)
+           }catch (e:Exception){}
+        }
     }
 
 

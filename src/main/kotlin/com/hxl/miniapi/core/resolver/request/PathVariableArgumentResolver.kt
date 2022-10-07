@@ -25,8 +25,7 @@ class PathVariableArgumentResolver : ArgumentResolver {
     private val simpleTypeConverter = SimpleTypeConverter()
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
         return parameterInfo.hasAnnotation(PathVariable::class.java) &&
-                parameterInfo.param.type.isString() ||
-                parameterInfo.param.type.isBaseType()
+                (parameterInfo.param.type.isString() || parameterInfo.param.type.isBaseType())
     }
 
     override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {

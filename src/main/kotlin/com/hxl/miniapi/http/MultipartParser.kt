@@ -54,7 +54,7 @@ class MultipartParser(private val requestBody: ByteArray, private val boundary: 
                         this.name = property[NAME_KEY]!!
                         this.contentType = property[CONTENT_TYPE]!!
                         this.inputStream = ByteArrayInputStream(keyValue)
-                        this.contentTypeLength = keyValue.size.toLong()
+                        this.contentLength = keyValue.size.toLong()
                     }
                 } else {
                     result[property[NAME_KEY]!!] = keyValue.decodeToString()

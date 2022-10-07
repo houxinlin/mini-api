@@ -9,6 +9,7 @@ import com.hxl.miniapi.core.exception.ClientException
 import com.hxl.miniapi.core.exception.ServerException
 import com.hxl.miniapi.http.*
 import com.hxl.miniapi.http.anno.param.RequestParam
+import com.hxl.miniapi.http.file.FilePart
 import com.hxl.miniapi.http.session.Session
 import com.hxl.miniapi.utils.isBaseType
 import com.hxl.miniapi.utils.isString
@@ -22,7 +23,8 @@ import com.hxl.miniapi.utils.urlArgumentToMap
 class RequestParamSimpleTypeArgumentResolver(private val context: Context) : ArgumentResolver {
     private val simpleTypeConverter = SimpleTypeConverter()
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
-        return parameterInfo.hasAnnotation (RequestParam::class.java) && parameterInfo.param.type!=Session::class.java
+        return parameterInfo.hasAnnotation (RequestParam::class.java) &&
+                (parameterInfo.param.type!=Session::class.java || parameterInfo.param.type!=FilePart::class.java)
     }
 
     override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {
@@ -62,6 +64,7 @@ class RequestParamSimpleTypeArgumentResolver(private val context: Context) : Arg
         methodParameter: MethodParameter,
         request: HttpRequestAdapter
     ): Any? {
+
         val requireClassType = methodParameter.param.type
         val argumentValue = urlQuery.urlArgumentToMap()[argumentName]
             ?: throw ClientException.create400("参数${argumentName}不存在")

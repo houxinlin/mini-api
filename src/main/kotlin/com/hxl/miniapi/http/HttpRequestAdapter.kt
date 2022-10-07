@@ -4,6 +4,7 @@ import com.hxl.miniapi.http.session.Session
 import com.hxl.miniapi.http.session.SessionManager
 import com.hxl.miniapi.utils.urlArgumentToMap
 import com.sun.net.httpserver.HttpExchange
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 open class HttpRequestAdapter(private val httpExchange: HttpExchange) {
@@ -93,7 +94,8 @@ open class HttpRequestAdapter(private val httpExchange: HttpExchange) {
     }
 
     private fun setResponseCookie(httpExchange: HttpExchange, sessionId: String) {
-        httpExchange.responseHeaders.set("Set-Cookie", "$SESSION_ID=$sessionId;Path=/")
+        val maxAge =TimeUnit.DAYS.toMillis(1)
+        httpExchange.responseHeaders.set("Set-Cookie", "$SESSION_ID=$sessionId;Path=/ ;max-age=$maxAge")
     }
 
 

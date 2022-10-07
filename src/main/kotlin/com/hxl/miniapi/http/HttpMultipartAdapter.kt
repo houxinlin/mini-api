@@ -14,4 +14,8 @@ class HttpMultipartAdapter(private val httpExchange: HttpExchange) : HttpRequest
     fun getFilePart(argumentName: String): FilePart? {
         return multipartParser.getFiles().find { it.name == argumentName }
     }
+
+    fun getFileParts():List<FilePart>{
+        return multipartParser.getFiles()
+    }
 }

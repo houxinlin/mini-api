@@ -8,6 +8,7 @@ import com.hxl.miniapi.http.HttpMultipartAdapter
 import com.hxl.miniapi.http.HttpRequestAdapter
 import com.hxl.miniapi.http.anno.param.RequestParam
 import com.hxl.miniapi.http.file.FilePart
+import kotlin.reflect.full.isSuperclassOf
 
 /**
 * @description: 解析FilePart
@@ -16,17 +17,20 @@ import com.hxl.miniapi.http.file.FilePart
 
 class FilePartArgumentResolver :ArgumentResolver{
     override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
-        return parameterInfo.param.type.kotlin==FilePart::class
+        return parameterInfo.param.type.kotlin==FilePart::class || List::class.isSuperclassOf(parameterInfo.param.type.kotlin)
     }
 
     override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {
+
         val argumentName = if (parameterInfo.hasAnnotation(RequestParam::class.java)){
             parameterInfo.getAnnotation(RequestParam::class.java)!!.value
         } else parameterInfo.parameterName
-
+        if (List::class.isSuperclassOf(parameterInfo.param.type.kotlin) && request is HttpMultipartAdapter){
+            return request.getFileParts()
+        }
         if (request is HttpMultipartAdapter ) {
             return request.getFilePart(argumentName) ?: ClientException.create400("找不到参数${argumentName}")
         }
-        return  ClientException.create400("不支持此请求")
+        throw  ClientException.create400("不支持此请求")
     }
 }
