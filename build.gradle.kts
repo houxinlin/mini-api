@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.houxinlin"
-version = "1.0.3"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
@@ -26,6 +26,7 @@ dependencies {
     api("org.mybatis:mybatis:3.5.11")
     api("mysql:mysql-connector-java:8.0.30")
 
+    api("ch.qos.logback:logback-classic:1.3.0")
 
 }
 
@@ -81,14 +82,14 @@ publishing {
     }
     repositories {
         maven {
-//            val releasesRepoUrl = uri(layout.buildDirectory.dir("repos/releases"))
-//            val snapshotsRepoUrl = uri(layout.buildDirectory.dir("repos/snapshots"))
-//            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
-            credentials {
-                username =properties["mavenCentralUsername"].toString()
-                password =properties["mavenCentralPassword"].toString()
-            }
+            val releasesRepoUrl = uri(layout.buildDirectory.dir("repos/releases"))
+            val snapshotsRepoUrl = uri(layout.buildDirectory.dir("repos/snapshots"))
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+//            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
+//            credentials {
+//                username =properties["mavenCentralUsername"].toString()
+//                password =properties["mavenCentralPassword"].toString()
+//            }
         }
     }
 }

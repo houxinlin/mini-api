@@ -5,6 +5,10 @@ enum class ContentType(val contentType:String) {
     WWW_FORM_URLENCODEED("application/x-www-form-urlencoded"),
     TEXT_PLAIN("text/plain"),
     FORM_DATA("multipart/form-data"),
-    APPLICATION_STREAM("application/octet-stream")
+    APPLICATION_STREAM("application/octet-stream");
+
+    fun applyCharset(charset:String): String {
+        return "${this.contentType};charset=$charset"
+    }
 
 }

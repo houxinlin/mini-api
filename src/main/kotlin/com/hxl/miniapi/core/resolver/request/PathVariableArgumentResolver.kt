@@ -4,10 +4,10 @@ import com.hxl.miniapi.core.ArgumentResolver
 import com.hxl.miniapi.core.MappingInfo
 import com.hxl.miniapi.core.MethodParameter
 import com.hxl.miniapi.core.convert.SimpleTypeConverter
-import com.hxl.miniapi.core.exception.ClientException
-import com.hxl.miniapi.http.HttpRequestAdapter
+import com.hxl.miniapi.core.exception.HttpExceptionUtils
 import com.hxl.miniapi.http.anno.param.PathVariable
-import com.hxl.miniapi.http.anno.param.RequestParam
+import com.hxl.miniapi.http.request.HttpRequest
+import com.hxl.miniapi.http.response.HttpResponse
 import com.hxl.miniapi.utils.isBaseType
 import com.hxl.miniapi.utils.isString
 
@@ -23,12 +23,17 @@ class PathVariableArgumentResolver : ArgumentResolver {
     }
 
     private val simpleTypeConverter = SimpleTypeConverter()
-    override fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter): Boolean {
+    override fun support(parameterInfo: MethodParameter, request: HttpRequest): Boolean {
         return parameterInfo.hasAnnotation(PathVariable::class.java) &&
                 (parameterInfo.param.type.isString() || parameterInfo.param.type.isBaseType())
     }
 
-    override fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo): Any? {
+    override fun resolver(
+        parameterInfo: MethodParameter,
+        request: HttpRequest,
+        response: HttpResponse,
+        mappingInfo: MappingInfo
+    ): Any? {
         //要获取的变量值名
         val pathVariableValue = if (parameterInfo.hasAnnotation(PathVariable::class.java)) {
             parameterInfo.getAnnotation(PathVariable::class.java)!!.value
@@ -46,6 +51,6 @@ class PathVariableArgumentResolver : ArgumentResolver {
                 return simpleTypeConverter.typeConvert(parameterInfo.param.type, requestPathSplit[i])
             }
         }
-        throw ClientException.create400("参数${pathVariableValue}无法转换")
+        throw HttpExceptionUtils.create400("参数${pathVariableValue}无法转换")
     }
 }

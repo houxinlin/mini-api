@@ -1,16 +1,21 @@
-package com.hxl.miniapi.http.session
+package com.hxl.miniapi.core
 
+import com.hxl.miniapi.http.session.Session
+import com.hxl.miniapi.http.session.MiniSession
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.DelayQueue
-import java.util.concurrent.Delayed
-import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-object SessionManager {
-
-
+class ContextManager : Manager {
     private val sessionMap = ConcurrentHashMap<String, Session>()
+    override fun findSession(sessionId: String): Session? {
+        return sessionMap[sessionId]
+    }
+
+    override fun createNewSession(): Session {
+        val sessionId = createSessionId()
+        return putSession(sessionId, MiniSession(sessionId))
+    }
 
     init {
         thread {
@@ -23,9 +28,10 @@ object SessionManager {
             }
         }
     }
-     fun removeSession(sessionId:String){
-         sessionMap.remove(sessionId)
-     }
+
+    override fun removeSession(sessionId: String) {
+        sessionMap.remove(sessionId)
+    }
 
     /**
      * @description: 创建sessionId
@@ -47,24 +53,4 @@ object SessionManager {
         return session
     }
 
-    /**
-     * @description: 获取session，如果不存在则创建新的session
-     * @date: 2022/10/5 下午5:07
-     */
-
-    fun getSession(sessionId: String): Session? {
-        if (sessionMap.containsKey(sessionId)) return sessionMap[sessionId]!!
-        return null
-    }
-
-
-    /**
-     * @description: 创建新的session
-     * @date: 2022/10/5 下午5:07
-     */
-
-    fun newSession(): Session {
-        val sessionId = createSessionId()
-        return putSession(sessionId, SessionImpl(sessionId))
-    }
 }

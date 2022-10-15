@@ -3,12 +3,12 @@ package com.hxl.miniapi.core.resolver.response
 import com.hxl.miniapi.core.ResultResolver
 import com.hxl.miniapi.http.ContentType
 
-class StringResultResolver : ResultResolver() {
+class NullResultResolver:ResultResolver() {
     override fun support(data: Any?): Boolean {
-        return data != null && data is String
+        return data== null
     }
     override fun resolverValue(data: Any?): ByteArray {
-        return data.toString().toByteArray()
+       return  ByteArray(0)
     }
     override fun getContentType(data: Any?): ContentType {
         return ContentType.TEXT_PLAIN

@@ -8,11 +8,9 @@ class SimpleTypeResultResolver :ResultResolver(){
     override fun support(data: Any?): Boolean {
         return data!=null && data::class.java.isBaseType()
     }
-
     override fun resolverValue(data: Any?): ByteArray {
         return data.toString().toByteArray()
     }
-
     override fun getContentType(data: Any?): ContentType {
         return ContentType.TEXT_PLAIN
     }

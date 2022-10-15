@@ -1,21 +1,34 @@
 package controller
 
 import com.hxl.miniapi.http.anno.GetMapping
-import com.hxl.miniapi.http.anno.PostMapping
 import com.hxl.miniapi.http.anno.RestController
 import com.hxl.miniapi.http.anno.param.RequestParam
-import com.hxl.miniapi.http.file.FilePart
+import com.hxl.miniapi.http.cookie.Cookie
+import com.hxl.miniapi.http.request.HttpRequest
+import com.hxl.miniapi.http.response.HttpResponse
 import com.hxl.miniapi.http.session.Session
 
 @RestController
 class Controller {
-    @GetMapping("login")
-    fun login(session: Session):String{
-        var attributeKeys = session.getAttributeKeys()
-        return "name"
+
+    @GetMapping("set")
+    fun set(@RequestParam("file") filePart: String,
+            httpRequest: HttpRequest,
+            httpResponse: HttpResponse,
+            session: Session,
+            @RequestParam("page") page: Int):String{
+        session.setAttribute("User","b")
+        session.setTnvalidTime(5*1000)
+        return "ok"
     }
-    @PostMapping("set")
-    fun set(@RequestParam("file") filePart: FilePart):String{
+    @GetMapping("get")
+    fun get(@RequestParam("file") filePart: String,
+            httpRequest: HttpRequest,
+            httpResponse: HttpResponse,
+            session: Session,
+            @RequestParam("page") page: Int):String{
+        println(session.getAttibute("a","s"))
+
         return "ok"
     }
 }

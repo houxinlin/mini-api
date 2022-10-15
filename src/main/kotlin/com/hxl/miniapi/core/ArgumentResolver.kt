@@ -1,6 +1,7 @@
 package com.hxl.miniapi.core
 
-import com.hxl.miniapi.http.HttpRequestAdapter
+import com.hxl.miniapi.http.request.HttpRequest
+import com.hxl.miniapi.http.response.HttpResponse
 
 
 /**
@@ -9,7 +10,7 @@ import com.hxl.miniapi.http.HttpRequestAdapter
 */
 
 interface ArgumentResolver {
-    fun support(parameterInfo: MethodParameter, request: HttpRequestAdapter):Boolean
+    fun support(parameterInfo: MethodParameter, request: HttpRequest):Boolean
 
-    fun resolver(parameterInfo: MethodParameter, request: HttpRequestAdapter, mappingInfo: MappingInfo):Any?
+    fun resolver(parameterInfo: MethodParameter, request: HttpRequest,response:HttpResponse, mappingInfo: MappingInfo):Any?
 }

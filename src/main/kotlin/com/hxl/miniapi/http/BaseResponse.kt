@@ -5,5 +5,5 @@ package com.hxl.miniapi.http
 * @date: 2022/10/5 上午11:05
 */
 
-open class BaseHttpResponse( val code:Int =200):HttpResponse {
+open class BaseResponse(val code:Int =200):Response {
 }

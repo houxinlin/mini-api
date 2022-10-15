@@ -21,7 +21,7 @@ class JarResourceLoader:ResourceLoader {
             val jarFile = connection.jarFile
             while (entries.hasMoreElements()){
                 val name = entries.nextElement().name
-                if (name.startsWith(keyword) && name.endsWith(".class")){
+                if (name.startsWith(keyword) && name.endsWith(".class" ,ignoreCase = true)){
                     result.add(URL("jar:file:${jarFile.name}!/${name}"))
                 }
             }

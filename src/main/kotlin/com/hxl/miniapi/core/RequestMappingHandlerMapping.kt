@@ -1,6 +1,6 @@
 package com.hxl.miniapi.core
 
-import com.hxl.miniapi.http.HttpRequestAdapter
+import com.hxl.miniapi.http.request.HttpRequest
 import com.hxl.miniapi.utils.AntPathMatcher
 
 class RequestMappingHandlerMapping(private val context: Context) {
@@ -14,9 +14,9 @@ class RequestMappingHandlerMapping(private val context: Context) {
     fun registerMapping(mappingInfo: MappingInfo){
         mappings.add(mappingInfo)
     }
-    fun getHandler(httpRequestAdapter: HttpRequestAdapter): HandlerMapping?{
+    fun getHandler(httpRequest: HttpRequest): HandlerMapping?{
         val mappingInfo = mappings.find {
-            pathMatcher.match(it.urlPatterns, httpRequestAdapter.getRequestPath()) && httpRequestAdapter.getRequestMethod()==it.httpMethod
+            pathMatcher.match(it.urlPatterns, httpRequest.getRequestPath()) && httpRequest.getHttpMethod()==it.httpMethod
         }
         if (mappingInfo!=null) return HandlerMappingImpl(mappingInfo,context)
         return  null

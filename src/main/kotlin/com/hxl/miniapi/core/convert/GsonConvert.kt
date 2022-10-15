@@ -5,8 +5,7 @@ import com.google.gson.reflect.TypeToken
 import com.hxl.miniapi.core.JsonConvert
 import java.lang.reflect.Type
 
-class GsonConvert :JsonConvert{
-    private val gson:Gson=Gson()
+class GsonConvert(private var gson:Gson) :JsonConvert{
     override fun toJson(data: Any): String? {
         return gson.toJson(data)!!
     }

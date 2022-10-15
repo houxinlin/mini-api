@@ -1,6 +1,6 @@
 package com.hxl.miniapi.core
 
-import com.hxl.miniapi.core.auth.MiniAuthentication
+import com.google.gson.Gson
 import com.hxl.miniapi.core.convert.GsonConvert
 import com.hxl.miniapi.core.convert.HttpParameteLocalDateTimeTypeConverter
 import com.hxl.miniapi.core.convert.HttpParameterDateTypeConverter
@@ -10,7 +10,10 @@ import com.hxl.miniapi.core.io.JarResourceLoader
 import com.hxl.miniapi.core.resolver.request.*
 import com.hxl.miniapi.core.resolver.response.*
 import com.hxl.miniapi.http.HttpIntercept
+import com.hxl.miniapi.http.InterceptorRegistration
 import com.hxl.miniapi.http.anno.RestController
+import com.hxl.miniapi.http.response.ClientErrorPageResponse
+import com.hxl.miniapi.http.response.ServerErrorPageResponse
 import com.hxl.miniapi.http.server.CoolMiniWebServerImpl
 import com.hxl.miniapi.http.server.WebServer
 import com.hxl.miniapi.orm.AutowriteCrud
@@ -19,7 +22,6 @@ import com.hxl.miniapi.orm.Mybatis
 import com.hxl.miniapi.orm.MybatisCrudRepository
 import com.hxl.miniapi.utils.*
 import org.objectweb.asm.ClassReader
-import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Method
@@ -53,21 +55,20 @@ open class MiniContext : Context {
     private val resultResolver: MutableList<ResultResolver> = mutableListOf()
 
     /**
-     * @description: 拦截器
+     *  拦截器
      */
 
-    private val httpIntercepts: MutableList<HttpIntercept> = mutableListOf()
+    private val httpIntercepts: MutableList<InterceptorRegistration> = mutableListOf()
 
+    /**
+     * gson
+     */
+    private  var gson:Gson? =null
 
     /**
      * json转换器
      */
-    private var jsonConvert: JsonConvert = GsonConvert()
-
-    /**
-     * 认证器
-     */
-    private var authentication: MiniAuthentication? = null
+    private   var jsonConvert: JsonConvert ? =null
 
     /**
      * 数据源
@@ -84,11 +85,16 @@ open class MiniContext : Context {
      */
     private val beans = mutableMapOf<Class<*>, Any>()
 
+    private  var clientErrorPageResponse :ClientErrorPageResponse=object :ClientErrorPageResponse(){}
+    private  var serverErrorPageResponse :ServerErrorPageResponse=object :ServerErrorPageResponse(){}
+    private val manager =ContextManager()
     private val fileResourceLoader =FileResourceLoader()
     private val jarResourceLoader =JarResourceLoader()
+
     init {
         addArgumentResolvers(
             false,
+            RequestRawParamResolver(),
             SessionArgumentResolver(),
             RequestUriArgumentResolver(),
             FilePartArgumentResolver(),
@@ -108,36 +114,16 @@ open class MiniContext : Context {
 
         addResultResolvers(
             false,
+            NullResultResolver(),
+            ExceptionResponseResolver(this),
             StringResultResolver(),
-            InputStreamResulResolver(),
+            ByteStreamResulResolver(),
             SimpleTypeResultResolver(),
-            HttpStatusResponseResolver(this.jsonConvert),
-            JsonResultResolver(this.jsonConvert))
+            JsonResultResolver(this))
     }
-
-    override fun getArgumentResolvers(): List<ArgumentResolver> {
-        return this.argumentResolvers
-    }
-
-    override fun getRequestMappingHandlerMapping(): RequestMappingHandlerMapping {
-        return this.requestMappingHandlerMapping
-    }
-
-    override fun addHttpIntercept(httpIntercept: HttpIntercept) {
-        this.httpIntercepts.add(httpIntercept)
-    }
-
-    override fun getHttpIntercept(): List<HttpIntercept> {
-        return this.httpIntercepts
-    }
-
-    override fun createWebServer(): WebServer {
-        return CoolMiniWebServerImpl(this)
-    }
-
     override fun refresh(start: Class<*>) {
-        componentClass.clear()
-
+        if (this.gson ==null) this.gson =Gson()
+        if (this.jsonConvert ==null) this.jsonConvert =GsonConvert(this.gson!!)
         val packageInfo = start.`package`
         val name =if (packageInfo==null) "" else packageInfo.name
         val resources = ClassLoader.getSystemClassLoader().getResources(name.replace(".","/"))
@@ -150,14 +136,49 @@ open class MiniContext : Context {
                 classResources.addAll(jarResourceLoader.getResources(resource.file))
             }
         }
+        //从类路径下找到所有component类，目前只有标有RestContrller的类才会被找到
         findComponentClass(classResources)
+        //从标有@RestController的类下注册所有mapping
         registerIfRequestMapping()
         //如果存在数据源配置，则自动注入依赖
         this.beans.values.forEach(this::autowriteInjection)
+        //调用bean的初始化方法
         invokeBeanInitMethod()
 
     }
+    override fun setGson(gson: Gson) {
+        this.gson =gson
+    }
 
+    override fun getGson(): Gson? {
+        return this.gson
+    }
+
+    override fun registerController(vararg controllerClass: Class<*>) {
+       controllerClass.forEach (componentClass::add)
+    }
+
+    override fun getArgumentResolvers(): List<ArgumentResolver> {
+        return this.argumentResolvers
+    }
+
+    override fun getRequestMappingHandlerMapping(): RequestMappingHandlerMapping {
+        return this.requestMappingHandlerMapping
+    }
+
+    override fun addHttpIntercept(httpIntercept: HttpIntercept): InterceptorRegistration {
+        val  registration = InterceptorRegistration(httpIntercept)
+        this.httpIntercepts.add(registration)
+        return registration
+    }
+
+    override fun getHttpIntercept(): List<InterceptorRegistration> {
+        return this.httpIntercepts
+    }
+
+    override fun createWebServer(): WebServer {
+        return CoolMiniWebServerImpl(this)
+    }
 
     /**
     * @description: 调用对象init方法
@@ -270,7 +291,7 @@ open class MiniContext : Context {
         this.jsonConvert = jsonConvert
     }
 
-    override fun getJsonConvert(): JsonConvert {
+    override fun getJsonConvert(): JsonConvert? {
         return this.jsonConvert
     }
 
@@ -281,24 +302,27 @@ open class MiniContext : Context {
     override fun getHttpParameterTypeConverter(): List<HttpParameterTypeConverter<*>> {
         return this.httpParameterTypeConverter
     }
-
-    override fun setAuthorization(authentication: MiniAuthentication) {
-        if (authentication.authUrl.isEmpty()) throw IllegalArgumentException("url参数不能为空")
-        val newUrl = if (authentication.authUrl == "/") "/" else {
-            if (!authentication.authUrl.startsWith("/")) {
-                "/${authentication.authUrl}"
-            } else {
-                authentication.authUrl
-            }
-        }
-        this.authentication = MiniAuthentication(newUrl.removeSuffix("/"), authentication.authentication)
-    }
-
     override fun setDataSource(dataSource: DataSource) {
         this.dataSource = dataSource
     }
 
-    override fun getAuthorization(): MiniAuthentication? {
-        return this.authentication
+    override fun getManager(): Manager {
+        return this.manager
+    }
+
+    override fun setClientErrorPageResponse(clientErrorPageResponse: ClientErrorPageResponse) {
+        this.clientErrorPageResponse =clientErrorPageResponse
+    }
+
+    override fun getClientErrorPageResponse(): ClientErrorPageResponse {
+        return this.clientErrorPageResponse
+    }
+
+    override fun setServerErrorPageResponse(serverErrorPageResponse: ServerErrorPageResponse) {
+        this.serverErrorPageResponse=serverErrorPageResponse
+    }
+
+    override fun getServerErrorPageResponse(): ServerErrorPageResponse {
+        return this.serverErrorPageResponse
     }
 }

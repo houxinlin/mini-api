@@ -1,9 +1,3 @@
 package com.hxl.miniapi.core.exception
 
-
-
-object ServerException {
-    fun create500(msg:String): HttpException {
-        return HttpException(msg,500)
-    }
-}
+class ServerException(private val msg:String,  code:Int):HttpException(msg,code) {}

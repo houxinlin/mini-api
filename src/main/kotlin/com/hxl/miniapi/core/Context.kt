@@ -1,7 +1,10 @@
 package com.hxl.miniapi.core
 
-import com.hxl.miniapi.core.auth.MiniAuthentication
+import com.google.gson.Gson
 import com.hxl.miniapi.http.HttpIntercept
+import com.hxl.miniapi.http.InterceptorRegistration
+import com.hxl.miniapi.http.response.ClientErrorPageResponse
+import com.hxl.miniapi.http.response.ServerErrorPageResponse
 import com.hxl.miniapi.http.server.WebServer
 import javax.sql.DataSource
 
@@ -58,7 +61,7 @@ interface  Context {
     * @description: 添加拦截器
     * @date: 2022/10/3 下午8:44
     */
-    fun addHttpIntercept(httpIntercept: HttpIntercept)
+    fun addHttpIntercept(httpIntercept: HttpIntercept): InterceptorRegistration
 
 
     /**
@@ -66,7 +69,7 @@ interface  Context {
     * @date: 2022/10/5 下午8:20
     */
 
-    fun getHttpIntercept():List<HttpIntercept>
+    fun getHttpIntercept():List<InterceptorRegistration>
 
     /**
     * @description: json转换器
@@ -81,7 +84,7 @@ interface  Context {
     * @date: 2022/10/5 上午6:28
     */
 
-    fun getJsonConvert():JsonConvert
+    fun getJsonConvert():JsonConvert?
 
 
     /**
@@ -99,20 +102,6 @@ interface  Context {
 
     fun getHttpParameterTypeConverter():List<HttpParameterTypeConverter<*>>
 
-
-    /**
-    * @description: 设置认证
-    * @date: 2022/10/5 上午6:31
-    */
-    fun getAuthorization():MiniAuthentication?
-
-    /**
-    * @description: 设置认证
-    * @date: 2022/10/5 下午6:33
-    */
-    fun setAuthorization(authentication: MiniAuthentication)
-
-
     /**
     * @description: 设置DataSource
     * @date: 2022/10/6 上午6:19
@@ -120,4 +109,32 @@ interface  Context {
 
     fun setDataSource(dataSource: DataSource)
 
+    /**
+     * session管理器
+     */
+    fun getManager():Manager
+
+    /**
+     * 客户端请求错误回复模板
+     */
+    fun setClientErrorPageResponse(clientErrorPageResponse: ClientErrorPageResponse)
+
+    fun getClientErrorPageResponse():ClientErrorPageResponse
+
+    /**
+     * 服务器错误回复模板
+     */
+    fun setServerErrorPageResponse(serverErrorPageResponse: ServerErrorPageResponse)
+
+    fun getServerErrorPageResponse():ServerErrorPageResponse
+
+    /**
+     * 注册Controller
+     */
+    fun registerController(vararg controllerClass: Class<*>)
+
+
+    fun setGson(gson: Gson)
+
+    fun getGson():Gson?
 }

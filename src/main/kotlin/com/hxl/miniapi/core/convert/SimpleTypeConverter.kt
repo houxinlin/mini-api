@@ -9,6 +9,10 @@ class SimpleTypeConverter {
         return typeConversters[requireClass.kotlin]!!.invoke(value)
     }
 
+    fun canConvert(requireClass: Class<*>, value: String): Boolean {
+        return typeConversters.containsKey(requireClass.kotlin)
+    }
+
     private val typeConversters: MutableMap<KClass<*>, (String) -> Any> = mutableMapOf(
         Int::class to { it.toInt() },
         Short::class to { it.toShort() },
@@ -17,24 +21,15 @@ class SimpleTypeConverter {
         Boolean::class to {
             if (it.lowercase() == "true" || it.lowercase() == "false") {
                 it.toBoolean()
-
             } else {
-                if (it != "0" && it != "1") {
-                    false
-                } else {
-                    it != "0"
-                }
+                if (it != "0" && it != "1") false else it != "0"
             }
 
         },
         Byte::class to { it.toByte() },
         Long::class to { it.toLong() },
         Char::class to {
-            if (it.isNotEmpty()) {
-                it.toCharArray()[0]
-            } else {
-                0x0.toChar()
-            }
+            if (it.isNotEmpty()) it.toCharArray()[0] else 0x0.toChar()
         },
     )
 }

@@ -1,5 +1,8 @@
 package com.hxl.miniapi.http
 
+import com.hxl.miniapi.http.request.HttpRequest
+import com.hxl.miniapi.http.response.HttpResponse
+
 /**
 * @description: 拦截器
 * @date: 2022/10/3 下午8:42
@@ -12,7 +15,7 @@ interface HttpIntercept {
     * @date: 2022/10/3 下午8:43
     */
 
-    fun intercept(httpAdapter: HttpRequestAdapter):Boolean
+    fun intercept(httpRequest:HttpRequest,httpResponse: HttpResponse):Boolean
 
 
     /**
@@ -20,5 +23,5 @@ interface HttpIntercept {
     * @date: 2022/10/3 下午8:43
     */
 
-    fun postHandler(httpAdapter: HttpRequestAdapter)
+    fun postHandler(httpRequest:HttpRequest,httpResponse: HttpResponse)
 }

@@ -3,7 +3,7 @@ package com.hxl.miniapi.http.session
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
-class SessionImpl(private val sId: String) : Session {
+class MiniSession(private val sId: String) : Session {
     private val sessionAttributeMap = ConcurrentHashMap<String, Any?>()
     private var maxInactiveInterval: Long = System.currentTimeMillis()+TimeUnit.HOURS.toMicros(1)
     override fun getAttibute(key: String, default: Any?): Any? {

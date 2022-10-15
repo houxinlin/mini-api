@@ -1,8 +1,10 @@
 package com.hxl.miniapi.core
 
-import com.hxl.miniapi.http.HttpRequestAdapter
-import com.hxl.miniapi.http.InterceptResponse
-import com.hxl.miniapi.http.NothingResponse
+import com.hxl.miniapi.core.exception.HttpExceptionUtils
+import com.hxl.miniapi.http.model.Model
+import com.hxl.miniapi.http.request.HttpRequest
+import com.hxl.miniapi.http.response.HttpResponse
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Parameter
 
 class HandlerMappingImpl(private val mappingInfo: MappingInfo, private val context: Context) : HandlerMapping {
@@ -13,47 +15,40 @@ class HandlerMappingImpl(private val mappingInfo: MappingInfo, private val conte
      * @date: 2022/10/5 下午7:10
      */
 
-    override fun handler(httpRequestAdapter: HttpRequestAdapter): Any {
-        return invokeUserInterface(httpRequestAdapter)
+    override fun handler(httpRequest: HttpRequest, httpResponse: HttpResponse): Model {
+        return invokeUserInterface(httpRequest, httpResponse)
     }
+
     /**
      * @description: 调用用户接口
      * @date: 2022/10/5 下午7:11
      */
 
-    private fun invokeUserInterface(requestAdapter: HttpRequestAdapter): Any {
-        //如果有拦截器拦截了此请求
-        val httpIntercept = context.getHttpIntercept().find { it.intercept(requestAdapter) }
-        if (httpIntercept != null) {
-            httpIntercept.postHandler(requestAdapter)
-            return InterceptResponse()
-        }
+    private fun invokeUserInterface(httpRequest: HttpRequest, httpResponse: HttpResponse): Model {
         val methodArg = mutableListOf<Any?>()
         for (parameterInfo in parameterInfos) {
-            val argumentResolvers = findArgumentResolvers(parameterInfo, requestAdapter)
-                ?: throw IllegalStateException("找不到参数解析器 ${parameterInfo.parameterName} ${parameterInfo.param.type}")
-            methodArg.add(argumentResolvers.resolver(parameterInfo, requestAdapter, mappingInfo))
+            val argumentResolvers = findArgumentResolvers(parameterInfo, httpRequest)
+                ?: throw HttpExceptionUtils.create500("找不到参数解析器 ${parameterInfo.parameterName} ${parameterInfo.param.type}")
+            methodArg.add(argumentResolvers.resolver(parameterInfo, httpRequest, httpResponse, mappingInfo))
         }
-        val invokeResult: Any? = if (mappingInfo.method.parameterCount == 0) {
-            mappingInfo.method.invoke(mappingInfo.instance)
-        } else {
-            mappingInfo.method.invoke(mappingInfo.instance, *methodArg.toTypedArray())
+        val invokeResult: Any?
+        try {
+            invokeResult = if (mappingInfo.method.parameterCount == 0) {
+                mappingInfo.method.invoke(mappingInfo.instance)
+            } else {
+                mappingInfo.method.invoke(mappingInfo.instance, *methodArg.toTypedArray())
+            }
+        } catch (e: InvocationTargetException) {
+            return Model().apply { this.data = e.targetException }
         }
-        //如果没有返回值&&null
-        if (mappingInfo.method.returnType.kotlin == Void::class || invokeResult == null) return NothingResponse()
-        return invokeResult
+        return Model().apply { this.data = invokeResult }
     }
 
 
-    private fun findArgumentResolvers(
-        parameter: MethodParameter,
-        requestAdapter: HttpRequestAdapter
-    ): ArgumentResolver? {
+    private fun findArgumentResolvers(parameter: MethodParameter, httpRequest: HttpRequest): ArgumentResolver? {
         for (argumentResolver in context.getArgumentResolvers()) {
             //找到能处理这个参数的参数解析器
-            if (argumentResolver.support(parameter, requestAdapter)) {
-                return argumentResolver
-            }
+            if (argumentResolver.support(parameter, httpRequest)) return argumentResolver
         }
         return null
     }
