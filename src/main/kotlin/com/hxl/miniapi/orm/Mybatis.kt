@@ -12,6 +12,7 @@ import org.apache.ibatis.session.RowBounds
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import org.apache.ibatis.transaction.TransactionFactory
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
+import java.sql.PreparedStatement
 import javax.sql.DataSource
 
 class Mybatis(private val dataSource: DataSource) {
@@ -32,24 +33,32 @@ class Mybatis(private val dataSource: DataSource) {
         return configuration.getMapper(type, session)
     }
 
-    fun <K, V> queryMap(querySql: String): List<Map<K, V>>? {
+    private fun applyParam(preparedStatement: PreparedStatement,vararg  arg:Any){
+        for (index in arg.indices) {
+            preparedStatement.setObject(index+1,arg[index])
+        }
+    }
+    fun <K, V> queryMap(querySql: String,vararg  arg: Any): List<Map<K, V>>? {
         val statementHandler = createStatementHandler(querySql, Map::class.java, SqlCommandType.SELECT)
         val defaultResultHandler = DefaultResultHandler(configuration.objectFactory)
         val stmt = statementHandler.prepare(connection, 2000)
-        return statementHandler.query<Map<K, V>>(stmt, defaultResultHandler)
+        applyParam(stmt as PreparedStatement,*arg)
+        return statementHandler.query(stmt, defaultResultHandler)
     }
 
 
-    fun <T> queryFormList(querySql: String, ofClass: Class<T>): List<T>? {
+    fun <T> queryFormList(querySql: String, ofClass: Class<T>,vararg  arg: Any): List<T>? {
         val statementHandler = createStatementHandler(querySql, ofClass, SqlCommandType.SELECT)
         val defaultResultHandler = DefaultResultHandler(configuration.objectFactory)
         val stmt = statementHandler.prepare(connection, 2000)
+        applyParam(stmt as PreparedStatement,*arg)
         return statementHandler.query<T>(stmt, defaultResultHandler)
     }
 
-    fun update(querySql: String): Int {
+    fun update(querySql: String,vararg  arg: Any): Int {
         val statementHandler = createStatementHandler(querySql, Int::class.java, SqlCommandType.UPDATE)
         val stmt = statementHandler.prepare(connection, 2000)
+        applyParam(stmt as PreparedStatement,*arg)
         return statementHandler.update(stmt)
     }
     private fun createResultMap(querySql: String, ofClass: Class<*>): ResultMap {
@@ -57,20 +66,12 @@ class Mybatis(private val dataSource: DataSource) {
             .build()
     }
 
-    private fun createStatementHandler(
-        querySql: String,
-        ofClass: Class<*>,
-        sqlCommandType: SqlCommandType
-    ): StatementHandler {
+    private fun createStatementHandler(querySql: String, ofClass: Class<*>, sqlCommandType: SqlCommandType): StatementHandler {
         val rawSqlSource = RawSqlSource(configuration, querySql, null)
         val statement = MappedStatement.Builder(configuration, querySql, rawSqlSource, sqlCommandType)
             .resultMaps(mutableListOf(createResultMap(querySql, ofClass)))
             .build()
         val boundSql = statement.getBoundSql(null)
-        val newStatementHandler =
-            configuration.newStatementHandler(executor, statement, null, RowBounds(), null, boundSql)
-        val stmt = newStatementHandler.prepare(connection, 2000)
-        newStatementHandler.parameterize(stmt)
-        return newStatementHandler
+        return configuration.newStatementHandler(executor, statement, null, RowBounds(), null, boundSql)
     }
 }

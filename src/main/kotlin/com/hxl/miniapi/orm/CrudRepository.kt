@@ -7,7 +7,7 @@ interface CrudRepository {
      * @date: 2022/10/6 上午4:35
      */
 
-    fun <T> listOne(querySql: String, ofClass: Class<T>): T?
+    fun <T> listOne(querySql: String, ofClass: Class<T>,vararg arg:Any): T?
 
 
     /**
@@ -15,7 +15,7 @@ interface CrudRepository {
      * @date: 2022/10/6 上午4:35
      */
 
-    fun listMap(querySql: String): List<Map<String, Any>>
+    fun listMap(querySql: String,vararg arg:Any): List<Map<String, Any>>
 
 
     /**
@@ -23,7 +23,7 @@ interface CrudRepository {
      * @date: 2022/10/6 上午4:36
      */
 
-    fun <T> list(querySql: String, ofClass: Class<T>): List<T>
+    fun <T> list(querySql: String, ofClass: Class<T>,vararg arg:Any): List<T>
 
 
     /**
@@ -31,6 +31,6 @@ interface CrudRepository {
      * @date: 2022/10/6 上午4:36
      */
 
-    fun update(querySql: String): Int
+    fun update(querySql: String,vararg arg:Any): Int
 
 }
