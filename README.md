@@ -33,11 +33,12 @@ public class Main{
 ### 创建映射
 返回类型可以是任意类型，同SpringBoot一样，最终序列化方式使用Gson，可以自定义序列化方式。
 ```java
+@RestController
 public class IndexController{
     @GetMapping("test")
     public String test(@RequestParam("userName")  String userName) {
         System.out.println(userName);
-        return "无法同步";
+        return "OK";
     }
 }
 ```
@@ -46,6 +47,8 @@ public class IndexController{
 2. @RequestBody 用来获取请求体，实际接收类型可以是String、基本数据类型、自定义对象，当是自定义对象时会通过Gson尝试把requestbody转换为对应类型。
 3. @RequestParam 获取请求参数，实际接收类型可以是String、基本数据类型、某对象，当为某对象时，如果系统无法自定义转换，可以通过HttpParameterTypeConverter进行自定义转换。
 4. @RequestUri 获取本次请求的完整路径
+
+**注意:** mini-api会扫描启动类所在包以及子包下所有标有@RestController注解的类进行注册。
 ## 获取Request & Response
 HttpRequest对应于Servlet规范中的HttpServletRequest。
 
@@ -96,7 +99,7 @@ public class Main {
         coolMini.addHttpIntercept(new HttpIntercept() {
             @Override
             public boolean intercept(@NotNull HttpRequest httpRequest, @NotNull HttpResponse httpResponse) {
-                //f返回true表示拦截，false则不拦截
+                //返回true表示拦截，false则不拦截
                 return false;
             }
 
@@ -135,5 +138,23 @@ public class Main {
             }
         });
     }
+}
+```
+
+# 打包
+
+注意，使用Gradle默认不会打包依赖，所以要进行以下配置。
+```gradle
+jar{
+    manifest {
+      attributes("Main-Class":"Main")
+    }
+    from{
+        configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect {
+            zipTree(it)
+        }
+    }
+    duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+
 }
 ```
