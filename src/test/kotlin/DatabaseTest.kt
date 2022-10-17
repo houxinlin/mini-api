@@ -15,20 +15,21 @@ class DatabaseTest {
 class DatabaseTestController{
     interface  Mapper {
         @Select("select * from aunt_day where id =#{id}")
-        fun list(@Param("id") id:Int):List<Any>
+        fun list(@Param("id") id:Int);
     }
     @AutowriteCrud
     lateinit var mybatisCrudRepository: MybatisCrudRepository
     @PostMapping("test")
     fun test(@RequestUri string: String): String {
-        println(mybatisCrudRepository.listMap("select * from aunt_day where id=? or id =?",48,11212))
+        println(mybatisCrudRepository.getMapper(Mapper::class.java).list(48))
+
         return string
     }
 }
 fun main() {
     val miniContext = CoolMini(7070)
     miniContext.registerController(DatabaseTestController::class.java)
-    miniContext.setDataSource(MysqlDataSource("root", "qwe753-+", "jdbc:mysql://xxx"))
+    miniContext.setDataSource(MysqlDataSource("root", "qwe753-+", "jdbc:mysql://rm-bp1v2a7fy0qq145e5qo.mysql.rds.aliyuncs.com:3306/aunt-day"))
 
     miniContext.start(CookieTest::class.java)
 }
