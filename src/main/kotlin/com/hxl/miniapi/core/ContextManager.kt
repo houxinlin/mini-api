@@ -20,11 +20,16 @@ class ContextManager : Manager {
     init {
         thread {
             //删除过期的key
+            val cacheSession = mutableListOf<Session>()
             while (true) {
-                val sessionList = sessionMap.values.filter { it.getTnvalidTime() < System.currentTimeMillis() }
-                sessionList.forEach {
-                    removeSession(it.getSessionId())
+                for (value in sessionMap.values) {
+                    if (value.getTnvalidTime() <System.currentTimeMillis()){
+                        cacheSession.add(value)
+                    }
                 }
+//                val sessionList = sessionMap.values.stream().filter { it.getTnvalidTime() < System.currentTimeMillis()  }
+                cacheSession.forEach { removeSession(it.getSessionId()) }
+                cacheSession.clear()
             }
         }
     }

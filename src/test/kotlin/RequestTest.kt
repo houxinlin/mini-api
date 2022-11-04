@@ -22,7 +22,9 @@ class RequestTestController{
     }
 }
 fun main() {
+    println("a")
     val miniContext = CoolMini(7070)
-    miniContext.registerController(RequestTestController::class.java)
-    miniContext.start(CookieTest::class.java)
+    println("b")
+  //  miniContext.registerController(RequestTestController::class.java)
+  //  miniContext.start(CookieTest::class.java)
 }

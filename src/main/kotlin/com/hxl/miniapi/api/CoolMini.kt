@@ -8,9 +8,6 @@ import com.hxl.miniapi.core.MiniContext
 
 class CoolMini(private val port: Int) :MiniContext(){
     fun start(start:Class<*>) {
-        refresh(start)
-        createWebServer().apply {
-            init(port = this@CoolMini.port )
-        }.start()
+
     }
 }
