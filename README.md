@@ -158,3 +158,16 @@ jar{
 
 }
 ```
+
+下面是使用Kotlin Gradle方式
+```kotlin
+tasks.jar{
+    manifest {
+        attributes.set("Main-Class","MainKt")
+    }
+    val contents = configurations.runtimeClasspath.get()
+        .map { if (it.isDirectory) it else zipTree(it) }
+    from(contents)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+```
