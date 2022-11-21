@@ -1,4 +1,4 @@
-package com.hxl.miniapi.orm
+package com.hxl.miniapi.orm.mybatis
 
 
 /**
@@ -6,11 +6,16 @@ package com.hxl.miniapi.orm
 * @date: 2022/10/6 上午6:25
 */
 
-class MybatisCrudRepository(private val mybatis: Mybatis) : BaseCrudRepository() {
+class MybatisCrudRepository(private val mybatis: Mybatis) : IMybatisCrudRepository {
 
-    fun  <T> getMapper(type:Class<T>):T{
+    override fun  <T> getMapper(type:Class<T>):T{
         return mybatis.getMapper(type)
     }
+
+    override fun getMybatis(): Mybatis {
+        return this.mybatis
+    }
+
     override fun <T> listOne(querySql: String, ofClass: Class<T>, vararg arg: Any): T? {
         val list = mybatis.queryFormList(querySql, ofClass,*arg) ?: return null
         if (list.isNotEmpty()) return list[0]

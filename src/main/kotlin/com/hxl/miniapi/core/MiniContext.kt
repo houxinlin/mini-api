@@ -16,16 +16,18 @@ import com.hxl.miniapi.http.response.ClientErrorPageResponse
 import com.hxl.miniapi.http.response.ServerErrorPageResponse
 import com.hxl.miniapi.http.server.CoolMiniWebServerImpl
 import com.hxl.miniapi.http.server.WebServer
-import com.hxl.miniapi.orm.AutowriteCrud
-import com.hxl.miniapi.orm.BaseCrudRepository
-import com.hxl.miniapi.orm.Mybatis
-import com.hxl.miniapi.orm.MybatisCrudRepository
+import com.hxl.miniapi.orm.*
+import com.hxl.miniapi.orm.mybatis.IMybatisCrudRepository
+import com.hxl.miniapi.orm.mybatis.Mybatis
+import com.hxl.miniapi.orm.mybatis.MybatisCrudProxy
+import com.hxl.miniapi.orm.mybatis.MybatisCrudRepository
 import com.hxl.miniapi.utils.*
 import org.objectweb.asm.ClassReader
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.lang.reflect.Proxy
 import java.net.URL
 import javax.sql.DataSource
 
@@ -63,12 +65,12 @@ open class MiniContext : Context {
     /**
      * gson
      */
-    private  var gson:Gson? =null
+    private var gson: Gson? = null
 
     /**
      * json转换器
      */
-    private   var jsonConvert: JsonConvert ? =null
+    private var jsonConvert: JsonConvert? = null
 
     /**
      * 数据源
@@ -85,11 +87,14 @@ open class MiniContext : Context {
      */
     private val beans = mutableMapOf<Class<*>, Any>()
 
-    private  var clientErrorPageResponse :ClientErrorPageResponse=object :ClientErrorPageResponse(){}
-    private  var serverErrorPageResponse :ServerErrorPageResponse=object :ServerErrorPageResponse(){}
-    private val manager =ContextManager()
-    private val fileResourceLoader =FileResourceLoader()
-    private val jarResourceLoader =JarResourceLoader()
+    private var mybatisRepositoryProxy: IMybatisCrudRepository? = null
+    private var mybatisRepositoryReal: IMybatisCrudRepository? = null
+
+    private var clientErrorPageResponse: ClientErrorPageResponse = object : ClientErrorPageResponse() {}
+    private var serverErrorPageResponse: ServerErrorPageResponse = object : ServerErrorPageResponse() {}
+    private val manager = ContextManager()
+    private val fileResourceLoader = FileResourceLoader()
+    private val jarResourceLoader = JarResourceLoader()
 
     init {
         addArgumentResolvers(
@@ -119,14 +124,16 @@ open class MiniContext : Context {
             StringResultResolver(),
             ByteStreamResulResolver(),
             SimpleTypeResultResolver(),
-            JsonResultResolver(this))
+            JsonResultResolver(this)
+        )
     }
+
     override fun refresh(start: Class<*>) {
-        if (this.gson ==null) this.gson =Gson()
-        if (this.jsonConvert ==null) this.jsonConvert =GsonConvert(this.gson!!)
+        if (this.gson == null) this.gson = Gson()
+        if (this.jsonConvert == null) this.jsonConvert = GsonConvert(this.gson!!)
         val packageInfo = start.`package`
-        val name =if (packageInfo==null) "" else packageInfo.name
-        val resources = ClassLoader.getSystemClassLoader().getResources(name.replace(".","/"))
+        val name = if (packageInfo == null) "" else packageInfo.name
+        val resources = ClassLoader.getSystemClassLoader().getResources(name.replace(".", "/"))
         val classResources = mutableListOf<URL>()
         for (resource in resources) {
             if (URL_PROTOCOL_FILE == resource.protocol) {
@@ -146,8 +153,9 @@ open class MiniContext : Context {
         invokeBeanInitMethod()
 
     }
+
     override fun setGson(gson: Gson) {
-        this.gson =gson
+        this.gson = gson
     }
 
     override fun getGson(): Gson? {
@@ -155,7 +163,7 @@ open class MiniContext : Context {
     }
 
     override fun registerController(vararg controllerClass: Class<*>) {
-       controllerClass.forEach (componentClass::add)
+        controllerClass.forEach(componentClass::add)
     }
 
     override fun getArgumentResolvers(): List<ArgumentResolver> {
@@ -167,7 +175,7 @@ open class MiniContext : Context {
     }
 
     override fun addHttpIntercept(httpIntercept: HttpIntercept): InterceptorRegistration {
-        val  registration = InterceptorRegistration(httpIntercept)
+        val registration = InterceptorRegistration(httpIntercept)
         this.httpIntercepts.add(registration)
         return registration
     }
@@ -181,17 +189,18 @@ open class MiniContext : Context {
     }
 
     /**
-    * @description: 调用对象init方法
-    * @date: 2022/10/7 上午10:01
-    */
+     * @description: 调用对象init方法
+     * @date: 2022/10/7 上午10:01
+     */
 
     private fun invokeBeanInitMethod() {
         for (bean in this.beans.values) {
-           try {
-               val initMethodHandle =
-                   MethodHandles.lookup().findVirtual(bean::class.java, "init", MethodType.methodType(Void.TYPE))
-               initMethodHandle.invoke(bean)
-           }catch (e:Exception){}
+            try {
+                val initMethodHandle =
+                    MethodHandles.lookup().findVirtual(bean::class.java, "init", MethodType.methodType(Void.TYPE))
+                initMethodHandle.invoke(bean)
+            } catch (e: Exception) {
+            }
         }
     }
 
@@ -200,23 +209,25 @@ open class MiniContext : Context {
      * @description: 依赖注入
      * @date: 2022/10/6 上午6:36
      */
-
+    private val IFACES: Array<Class<*>> = arrayOf(IMybatisCrudRepository::class.java)
     private fun autowriteInjection(bean: Any) {
-        if (dataSource == null)  return
-        val mybatis = MybatisCrudRepository(Mybatis(dataSource!!))
-
+        if (dataSource == null) return
+        if (mybatisRepositoryProxy == null) {
+            mybatisRepositoryReal = MybatisCrudRepository(Mybatis(dataSource!!))
+            mybatisRepositoryProxy = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(),IFACES ,
+                MybatisCrudProxy(mybatisRepositoryReal!!)
+            ) as IMybatisCrudRepository
+        }
         val beanFields = bean::class.java.declaredFields
         beanFields.forEach {
             if (it.getDeclaredAnnotation(AutowriteCrud::class.java) != null &&
                 !Modifier.isFinal(it.modifiers) &&
-                BaseCrudRepository::class.java.isAssignableFrom(it.type)) {
+                CrudRepository::class.java.isAssignableFrom(it.type)) {
                 it.isAccessible = true
-                it.set(bean, mybatis)
+                it.set(bean, mybatisRepositoryProxy)
             }
         }
-
     }
-
 
     /**
      * @description: 封装MappingInfo
@@ -266,7 +277,7 @@ open class MiniContext : Context {
         for (classResource in classResources) {
             val classNode = org.objectweb.asm.tree.ClassNode()
             ClassReader(classResource.openConnection().getInputStream()).accept(classNode, ClassReader.EXPAND_FRAMES)
-            if ( classNode.visibleAnnotations==null) continue
+            if (classNode.visibleAnnotations == null) continue
             classNode.visibleAnnotations.forEach {
                 if (COMPONENT_CLASS.contains(it.desc)) {
                     componentClass.add(classNode.name.toClass())
@@ -275,12 +286,12 @@ open class MiniContext : Context {
         }
     }
 
-    override fun addArgumentResolvers(first: Boolean,vararg argumentResolvers: ArgumentResolver) {
-        argumentResolvers.forEach { if (first)  this.argumentResolvers.add(0,it)else  this.argumentResolvers.add(it) }
+    override fun addArgumentResolvers(first: Boolean, vararg argumentResolvers: ArgumentResolver) {
+        argumentResolvers.forEach { if (first) this.argumentResolvers.add(0, it) else this.argumentResolvers.add(it) }
     }
 
-    override fun addResultResolvers(first: Boolean,vararg resultResolver: ResultResolver) {
-        resultResolver.forEach { if (first)  this.resultResolver.add(0,it)else  this.resultResolver.add(it) }
+    override fun addResultResolvers(first: Boolean, vararg resultResolver: ResultResolver) {
+        resultResolver.forEach { if (first) this.resultResolver.add(0, it) else this.resultResolver.add(it) }
     }
 
     override fun getResultResolvers(): List<ResultResolver> {
@@ -295,13 +306,22 @@ open class MiniContext : Context {
         return this.jsonConvert
     }
 
-    override fun addHttpParameterTypeConverter(first: Boolean, vararg httpParameterTypeConverter: HttpParameterTypeConverter<*>) {
-        httpParameterTypeConverter.forEach {if (first) this.httpParameterTypeConverter.add(0,it) else  this.httpParameterTypeConverter.add(it) }
+    override fun addHttpParameterTypeConverter(
+        first: Boolean,
+        vararg httpParameterTypeConverter: HttpParameterTypeConverter<*>
+    ) {
+        httpParameterTypeConverter.forEach {
+            if (first) this.httpParameterTypeConverter.add(
+                0,
+                it
+            ) else this.httpParameterTypeConverter.add(it)
+        }
     }
 
     override fun getHttpParameterTypeConverter(): List<HttpParameterTypeConverter<*>> {
         return this.httpParameterTypeConverter
     }
+
     override fun setDataSource(dataSource: DataSource) {
         this.dataSource = dataSource
     }
@@ -311,7 +331,7 @@ open class MiniContext : Context {
     }
 
     override fun setClientErrorPageResponse(clientErrorPageResponse: ClientErrorPageResponse) {
-        this.clientErrorPageResponse =clientErrorPageResponse
+        this.clientErrorPageResponse = clientErrorPageResponse
     }
 
     override fun getClientErrorPageResponse(): ClientErrorPageResponse {
@@ -319,7 +339,7 @@ open class MiniContext : Context {
     }
 
     override fun setServerErrorPageResponse(serverErrorPageResponse: ServerErrorPageResponse) {
-        this.serverErrorPageResponse=serverErrorPageResponse
+        this.serverErrorPageResponse = serverErrorPageResponse
     }
 
     override fun getServerErrorPageResponse(): ServerErrorPageResponse {
