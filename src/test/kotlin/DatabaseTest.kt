@@ -29,7 +29,7 @@ class DatabaseTestController{
 fun main() {
     val miniContext = CoolMini(7070)
     miniContext.registerController(DatabaseTestController::class.java)
-    miniContext.setDataSource(MysqlDataSource("root", "qwe753-+", "jdbc:mysql://rm-bp1v2a7fy0qq145e5qo.mysql.rds.aliyuncs.com:3306/aunt-day"))
+    miniContext.setDataSource(MysqlDataSource("root", "xxx-+", "jdbc:mysql://localhost:3306/aunt-day"))
 
     miniContext.start(CookieTest::class.java)
 }
