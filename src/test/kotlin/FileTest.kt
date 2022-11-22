@@ -1,10 +1,8 @@
 import com.hxl.miniapi.api.CoolMini
 import com.hxl.miniapi.http.anno.PostMapping
 import com.hxl.miniapi.http.anno.RestController
-import com.hxl.miniapi.http.anno.param.RequestBody
 import com.hxl.miniapi.http.anno.param.RequestParam
 import com.hxl.miniapi.http.file.FilePart
-import com.hxl.miniapi.http.response.HttpResponse
 
 class FileTest {
 }

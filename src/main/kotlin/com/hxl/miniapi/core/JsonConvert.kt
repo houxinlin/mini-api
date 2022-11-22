@@ -7,7 +7,7 @@ package com.hxl.miniapi.core
 */
 
 interface JsonConvert {
-    fun toJson(data:Any):String?
+    fun toJson(data:Any):String
 
     fun <T> fromJson(json: String ,toClass: Class<T>):T?
 

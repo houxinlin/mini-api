@@ -3,7 +3,6 @@ package controller
 import com.hxl.miniapi.http.anno.GetMapping
 import com.hxl.miniapi.http.anno.RestController
 import com.hxl.miniapi.http.anno.param.RequestParam
-import com.hxl.miniapi.http.cookie.Cookie
 import com.hxl.miniapi.http.request.HttpRequest
 import com.hxl.miniapi.http.response.HttpResponse
 import com.hxl.miniapi.http.session.Session

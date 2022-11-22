@@ -1,7 +1,6 @@
 package com.hxl.miniapi.core.resolver.response
 
 import com.hxl.miniapi.core.Context
-import com.hxl.miniapi.core.JsonConvert
 import com.hxl.miniapi.core.ResultResolver
 import com.hxl.miniapi.http.ContentType
 import com.hxl.miniapi.utils.isBaseType

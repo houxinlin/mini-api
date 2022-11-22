@@ -6,6 +6,7 @@ import com.hxl.miniapi.http.InterceptorRegistration
 import com.hxl.miniapi.http.response.ClientErrorPageResponse
 import com.hxl.miniapi.http.response.ServerErrorPageResponse
 import com.hxl.miniapi.http.server.WebServer
+import com.hxl.miniapi.kotlin.MiniKotlinApi
 import javax.sql.DataSource
 
 /**
@@ -137,4 +138,5 @@ interface  Context {
     fun setGson(gson: Gson)
 
     fun getGson():Gson?
+    fun whithKotlin(function: MiniKotlinApi.() -> Unit)
 }

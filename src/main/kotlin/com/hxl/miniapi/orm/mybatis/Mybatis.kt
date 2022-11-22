@@ -21,11 +21,11 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import javax.sql.DataSource
 
-class Mybatis(private val dataSource: DataSource) {
+class Mybatis(dataSource: DataSource) {
     private val transactionFactory: TransactionFactory = JdbcTransactionFactory()
     private val environment = Environment("development", transactionFactory, dataSource)
     private val configuration = Configuration(environment)
-    private fun getSession() = MybatisCrudProxy.threadLocal.get()
+    private fun getSession() = MybatisAutoSessionProxy.threadLocal.get()
     private fun getConnection() = getSession().connection
 
     private fun getExecutor(connection: Connection) =
@@ -34,7 +34,13 @@ class Mybatis(private val dataSource: DataSource) {
     init {
         configuration.isMapUnderscoreToCamelCase = true
     }
+    fun openNewSession():SqlSession{
+        return getSqlSessionFactory().openSession(true)
+    }
 
+    /**
+     * mybatis mapper代理对象的方法调用后要关闭sqlsession
+     */
     class MapperMethodAutoSessionProxy<T>(private val mapper: T, val session: SqlSession) : InvocationHandler {
         override fun invoke(proxy: Any, method: Method, args: Array<out Any>): Any {
             val result = method.invoke(mapper, *args.toList().toTypedArray())
@@ -45,8 +51,9 @@ class Mybatis(private val dataSource: DataSource) {
 
     fun <T> getMapper(type: Class<T>): T {
         if (!configuration.hasMapper(type)) configuration.addMapper(type)
-        val session = getSqlSessionFactory().openSession(true)
+        val session = openNewSession()
         val mapper = configuration.getMapper(type, session)
+        //返回代理对象，用来关闭sqlsession
         return Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), arrayOf(type), MapperMethodAutoSessionProxy(mapper,session)) as T
     }
 

@@ -1,5 +1,4 @@
 import com.hxl.miniapi.api.CoolMini
-import com.hxl.miniapi.http.anno.GetMapping
 import com.hxl.miniapi.http.anno.PostMapping
 import com.hxl.miniapi.http.anno.RestController
 import com.hxl.miniapi.http.anno.param.RequestBody

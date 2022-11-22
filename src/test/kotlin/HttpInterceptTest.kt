@@ -1,10 +1,7 @@
 import com.hxl.miniapi.api.CoolMini
 import com.hxl.miniapi.http.HttpIntercept
-import com.hxl.miniapi.http.anno.GetMapping
 import com.hxl.miniapi.http.request.HttpRequest
 import com.hxl.miniapi.http.response.HttpResponse
-import com.hxl.miniapi.http.session.MiniSession
-import com.hxl.miniapi.http.session.Session
 
 class CookieTest {
 }

@@ -3,8 +3,8 @@ import com.hxl.miniapi.http.anno.GetMapping
 import com.hxl.miniapi.http.anno.RestController
 import com.hxl.miniapi.http.anno.param.RequestUri
 import com.hxl.miniapi.orm.AutowriteCrud
-import com.hxl.miniapi.orm.mybatis.MysqlDataSource
 import com.hxl.miniapi.orm.mybatis.IMybatisCrudRepository
+import com.hxl.miniapi.orm.mybatis.MysqlDataSource
 import org.apache.ibatis.annotations.Param
 import org.apache.ibatis.annotations.Select
 

@@ -6,8 +6,8 @@ import com.hxl.miniapi.core.JsonConvert
 import java.lang.reflect.Type
 
 class GsonConvert(private var gson:Gson) :JsonConvert{
-    override fun toJson(data: Any): String? {
-        return gson.toJson(data)!!
+    override fun toJson(data: Any): String {
+        return gson.toJson(data)
     }
 
     override fun <T> fromJson(json: String, toClass: Class<T>): T? {

@@ -16,10 +16,11 @@ import com.hxl.miniapi.http.response.ClientErrorPageResponse
 import com.hxl.miniapi.http.response.ServerErrorPageResponse
 import com.hxl.miniapi.http.server.CoolMiniWebServerImpl
 import com.hxl.miniapi.http.server.WebServer
+import com.hxl.miniapi.kotlin.MiniKotlinApi
 import com.hxl.miniapi.orm.*
 import com.hxl.miniapi.orm.mybatis.IMybatisCrudRepository
 import com.hxl.miniapi.orm.mybatis.Mybatis
-import com.hxl.miniapi.orm.mybatis.MybatisCrudProxy
+import com.hxl.miniapi.orm.mybatis.MybatisAutoSessionProxy
 import com.hxl.miniapi.orm.mybatis.MybatisCrudRepository
 import com.hxl.miniapi.utils.*
 import org.objectweb.asm.ClassReader
@@ -128,6 +129,13 @@ open class MiniContext : Context {
         )
     }
 
+    fun getMybatisRepositoryProxy(): IMybatisCrudRepository? = this.mybatisRepositoryProxy
+
+    override fun whithKotlin(function: MiniKotlinApi.() -> Unit) {
+        val miniKotlinApi = MiniKotlinApi(this)
+        function.invoke(miniKotlinApi)
+    }
+
     override fun refresh(start: Class<*>) {
         if (this.gson == null) this.gson = Gson()
         if (this.jsonConvert == null) this.jsonConvert = GsonConvert(this.gson!!)
@@ -214,15 +222,17 @@ open class MiniContext : Context {
         if (dataSource == null) return
         if (mybatisRepositoryProxy == null) {
             mybatisRepositoryReal = MybatisCrudRepository(Mybatis(dataSource!!))
-            mybatisRepositoryProxy = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(),IFACES ,
-                MybatisCrudProxy(mybatisRepositoryReal!!)
+            mybatisRepositoryProxy = Proxy.newProxyInstance(
+                ClassLoader.getSystemClassLoader(), IFACES,
+                MybatisAutoSessionProxy(mybatisRepositoryReal!!)
             ) as IMybatisCrudRepository
         }
         val beanFields = bean::class.java.declaredFields
         beanFields.forEach {
             if (it.getDeclaredAnnotation(AutowriteCrud::class.java) != null &&
                 !Modifier.isFinal(it.modifiers) &&
-                CrudRepository::class.java.isAssignableFrom(it.type)) {
+                CrudRepository::class.java.isAssignableFrom(it.type)
+            ) {
                 it.isAccessible = true
                 it.set(bean, mybatisRepositoryProxy)
             }
