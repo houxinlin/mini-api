@@ -5,13 +5,14 @@ class KotlinTest {
 
 fun main() {
     val coolMini = CoolMini(4040)
-    coolMini.whithKotlin {
+    coolMini.withKotlin {
         configDatabase {
             userName ="root"
-            password="hxl495594.."
+            password=""
             url="jdbc:mysql://localhost:3306/db_inner"
         }
         get("get") {
+            runSqlListMap("select * from tb_user")
         }
         delete("delete"){
         }

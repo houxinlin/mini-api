@@ -138,5 +138,5 @@ interface  Context {
     fun setGson(gson: Gson)
 
     fun getGson():Gson?
-    fun whithKotlin(function: MiniKotlinApi.() -> Unit)
+    fun withKotlin(function: MiniKotlinApi.() -> Unit)
 }

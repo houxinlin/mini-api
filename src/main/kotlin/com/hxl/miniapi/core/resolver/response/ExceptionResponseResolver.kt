@@ -6,14 +6,14 @@ import com.hxl.miniapi.core.exception.ClientException
 import com.hxl.miniapi.core.exception.HttpException
 import com.hxl.miniapi.core.exception.ServerException
 import com.hxl.miniapi.http.ContentType
-import org.slf4j.LoggerFactory
+import org.apache.ibatis.logging.LogFactory
 import java.time.LocalDateTime
 
 /**
  * 处理异常返回
  */
 class ExceptionResponseResolver(private val context: Context) : ResultResolver() {
-    private val log = LoggerFactory.getLogger(ExceptionResponseResolver::class.java)
+    private val log = LogFactory.getLog(ExceptionResponseResolver::class.java)
     override fun support(data: Any?): Boolean {
         return data != null && data is Exception
     }

@@ -131,7 +131,7 @@ open class MiniContext : Context {
 
     fun getMybatisRepositoryProxy(): IMybatisCrudRepository? = this.mybatisRepositoryProxy
 
-    override fun whithKotlin(function: MiniKotlinApi.() -> Unit) {
+    override fun withKotlin(function: MiniKotlinApi.() -> Unit) {
         val miniKotlinApi = MiniKotlinApi(this)
         function.invoke(miniKotlinApi)
     }

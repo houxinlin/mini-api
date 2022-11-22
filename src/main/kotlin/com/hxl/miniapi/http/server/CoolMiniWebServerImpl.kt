@@ -3,14 +3,15 @@ package com.hxl.miniapi.http.server
 import com.hxl.miniapi.core.Context
 import com.hxl.miniapi.http.MiniWebHandler
 import com.sun.net.httpserver.HttpServer
-import org.slf4j.LoggerFactory
+import org.apache.ibatis.logging.LogFactory
 import java.net.InetSocketAddress
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import java.util.logging.Logger
 
 class CoolMiniWebServerImpl(private val context: Context):WebServer {
-    private val logger =LoggerFactory.getLogger(WebServer::class.java.simpleName)
+    private val logger =Logger.getLogger(WebServer::class.java.simpleName)
     private val webServer: HttpServer = HttpServer.create()
     private var miniWebHandler = MiniWebHandler(context)
 

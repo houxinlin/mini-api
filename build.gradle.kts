@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.houxinlin"
-version = "1.1.2"
+version = "1.3.2"
 
 repositories {
     mavenCentral()
@@ -25,9 +25,6 @@ dependencies {
     api("com.google.code.gson:gson:2.9.1")
     api("org.mybatis:mybatis:3.5.11")
     api("mysql:mysql-connector-java:8.0.30")
-
-    api("ch.qos.logback:logback-classic:1.3.0")
-
 }
 
 tasks.test {

@@ -21,6 +21,6 @@ fun main() {
      val configuration = Configuration(environment)
 
     configuration.addMapper(Mapper::class.java)
-    var build = SqlSessionFactoryBuilder().build(configuration)
+    var build = SqlSessionFactoryBuilder().build(configuration).openSession().getMapper(Mapper::class.java)
 
 }
