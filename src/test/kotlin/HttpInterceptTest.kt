@@ -16,6 +16,6 @@ fun main() {
 
         override fun postHandler(httpRequest: HttpRequest, httpResponse: HttpResponse) {
         }
-    }).addPathPatterns(arrayListOf("/**")).excludePathPatterns(arrayListOf("/set"))
+    }).includePathPatterns(arrayListOf("/**")).excludePathPatterns(arrayListOf("/set"))
     miniContext.start(CookieTest::class.java)
 }

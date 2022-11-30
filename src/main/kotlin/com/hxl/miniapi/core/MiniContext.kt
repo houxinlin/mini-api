@@ -155,6 +155,8 @@ open class MiniContext : Context {
         findComponentClass(classResources)
         //从标有@RestController的类下注册所有mapping
         registerIfRequestMapping()
+        //创建Mybatis实例
+        createMybatisRepository()
         //如果存在数据源配置，则自动注入依赖
         this.beans.values.forEach(this::autowriteInjection)
         //调用bean的初始化方法
@@ -212,13 +214,7 @@ open class MiniContext : Context {
         }
     }
 
-
-    /**
-     * @description: 依赖注入
-     * @date: 2022/10/6 上午6:36
-     */
-    private val IFACES: Array<Class<*>> = arrayOf(IMybatisCrudRepository::class.java)
-    private fun autowriteInjection(bean: Any) {
+    private fun createMybatisRepository() {
         if (dataSource == null) return
         if (mybatisRepositoryProxy == null) {
             mybatisRepositoryReal = MybatisCrudRepository(Mybatis(dataSource!!))
@@ -227,6 +223,16 @@ open class MiniContext : Context {
                 MybatisAutoSessionProxy(mybatisRepositoryReal!!)
             ) as IMybatisCrudRepository
         }
+    }
+
+
+    /**
+     * @description: 依赖注入
+     * @date: 2022/10/6 上午6:36
+     */
+    private val IFACES: Array<Class<*>> = arrayOf(IMybatisCrudRepository::class.java)
+    private fun autowriteInjection(bean: Any) {
+        if (mybatisRepositoryProxy == null) return
         val beanFields = bean::class.java.declaredFields
         beanFields.forEach {
             if (it.getDeclaredAnnotation(AutowriteCrud::class.java) != null &&

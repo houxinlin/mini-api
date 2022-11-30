@@ -34,7 +34,8 @@ class Mybatis(dataSource: DataSource) {
     init {
         configuration.isMapUnderscoreToCamelCase = true
     }
-    fun openNewSession():SqlSession{
+
+    fun openNewSession(): SqlSession {
         return getSqlSessionFactory().openSession(true)
     }
 
@@ -42,8 +43,12 @@ class Mybatis(dataSource: DataSource) {
      * mybatis mapper代理对象的方法调用后要关闭sqlsession
      */
     class MapperMethodAutoSessionProxy<T>(private val mapper: T, val session: SqlSession) : InvocationHandler {
-        override fun invoke(proxy: Any, method: Method, args: Array<out Any>): Any {
-            val result = method.invoke(mapper, *args.toList().toTypedArray())
+        override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any {
+            val result = if (args == null) {
+                method.invoke(mapper)
+            } else {
+                method.invoke(mapper, *args.toList().toTypedArray())
+            }
             session.close()
             return result
         }
@@ -54,7 +59,11 @@ class Mybatis(dataSource: DataSource) {
         val session = openNewSession()
         val mapper = configuration.getMapper(type, session)
         //返回代理对象，用来关闭sqlsession
-        return Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), arrayOf(type), MapperMethodAutoSessionProxy(mapper,session)) as T
+        return Proxy.newProxyInstance(
+            ClassLoader.getSystemClassLoader(),
+            arrayOf(type),
+            MapperMethodAutoSessionProxy(mapper, session)
+        ) as T
     }
 
     private fun applyParam(preparedStatement: PreparedStatement, vararg arg: Any) {

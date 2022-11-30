@@ -14,7 +14,11 @@ class MybatisAutoSessionProxy(private val mybatisRepositoryReal: IMybatisCrudRep
         if (method.declaringClass == CrudRepository::class.java) {
             threadLocal.set(mybatisRepositoryReal.getMybatis().openNewSession())
         }
-        val result = method.invoke(mybatisRepositoryReal, *args!!.toList().toTypedArray())
+        val result = if (args == null) {
+            method.invoke(mybatisRepositoryReal)
+        } else {
+            method.invoke(mybatisRepositoryReal, *args.toList().toTypedArray())
+        }
         if (threadLocal.get() != null) threadLocal.get().close()
         return result
     }

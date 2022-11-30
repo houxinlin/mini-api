@@ -19,9 +19,9 @@ class MiniRequestDispatcher(private val context: Context)  {
          val antPathMatcher = AntPathMatcher()
          val registration = context.getHttpIntercept().find { intercept ->
              //如果不需要拦截 返回false
-             if (intercept.includePatterns.find { antPathMatcher.match(it, httpRequest.getRequestPath()) } == null) return@find false
+             if (intercept.getIncludePatterns().find { antPathMatcher.match(it, httpRequest.getRequestPath()) } == null) return@find false
              //如果需要拦截，但已经排除
-             if (intercept.excludePatterns.find { antPathMatcher.match(it, httpRequest.getRequestPath()) } != null) return@find false
+             if (intercept.getExcludePatterns().find { antPathMatcher.match(it, httpRequest.getRequestPath()) } != null) return@find false
              return@find true
          }
          //如果有拦截器需要拦截,且拦截返回true
