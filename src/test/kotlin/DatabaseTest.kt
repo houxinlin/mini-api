@@ -12,25 +12,26 @@ class DatabaseTest {
 }
 
 @RestController
-class DatabaseTestController{
-    interface  Mapper {
+class DatabaseTestController {
+    interface Mapper {
         @Select("select * from tb_user where user_name =#{name}")
-        fun list(@Param("name")name:String):List<Map<String,String>>
+        fun list(@Param("name") name: String): List<Map<String, String>>
     }
+
     @AutowriteCrud
     lateinit var mybatisCrudRepository: IMybatisCrudRepository
+
     @GetMapping("test")
     fun test(@RequestUri string: String): String {
-        println(mybatisCrudRepository.listMap("select * from tb_user where user_name =?","123"))
-
-        println(mybatisCrudRepository.getMapper(Mapper::class.java).list("123"))
+        val a = mybatisCrudRepository.listMap("select * from tb_user ")
         return string
     }
 }
+
 fun main() {
     val miniContext = CoolMini(7070)
     miniContext.registerController(DatabaseTestController::class.java)
-    miniContext.setDataSource(MysqlDataSource("root", "hxl495594..", "jdbc:mysql://localhost:3306/db_inner"))
+    miniContext.setDataSource(MysqlDataSource("root", "xx", "jdbc:mysql://localhost:3306/db_inner"))
 
     miniContext.start(DatabaseTest::class.java)
 }

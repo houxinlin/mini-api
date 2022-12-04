@@ -9,7 +9,7 @@ fun main() {
     coolMini.withKotlin {
         configDatabase {
             userName ="root"
-            password="hxl495594.."
+            password="xx"
             url="jdbc:mysql://localhost:3306/db_inner"
         }
         interceptor{

@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.houxinlin"
-version = "1.3.3"
+version = "1.4.3"
 
 repositories {
     mavenCentral()
@@ -81,12 +81,12 @@ publishing {
         maven {
             val releasesRepoUrl = uri(layout.buildDirectory.dir("repos/releases"))
             val snapshotsRepoUrl = uri(layout.buildDirectory.dir("repos/snapshots"))
-//            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
-            credentials {
-                username =properties["mavenCentralUsername"].toString()
-                password =properties["mavenCentralPassword"].toString()
-            }
+            url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+//            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
+//            credentials {
+//                username =properties["mavenCentralUsername"].toString()
+//                password =properties["mavenCentralPassword"].toString()
+//            }
         }
     }
 }

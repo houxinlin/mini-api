@@ -14,6 +14,8 @@ import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import org.apache.ibatis.transaction.TransactionFactory
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
+import org.apache.ibatis.type.JdbcType
+import org.apache.ibatis.type.LocalDateTypeHandler
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
@@ -25,6 +27,7 @@ class Mybatis(dataSource: DataSource) {
     private val transactionFactory: TransactionFactory = JdbcTransactionFactory()
     private val environment = Environment("development", transactionFactory, dataSource)
     private val configuration = Configuration(environment)
+
     private fun getSession() = MybatisAutoSessionProxy.threadLocal.get()
     private fun getConnection() = getSession().connection
 
@@ -33,6 +36,8 @@ class Mybatis(dataSource: DataSource) {
 
     init {
         configuration.isMapUnderscoreToCamelCase = true
+        //将JDBC 数据类型为DATE的映射为LocalDate
+        configuration.typeHandlerRegistry.register(Any::class.java, JdbcType.DATE, LocalDateTypeHandler())
     }
 
     fun openNewSession(): SqlSession {
@@ -118,6 +123,6 @@ class Mybatis(dataSource: DataSource) {
         return configuration.newStatementHandler(getExecutor(connection), statement, null, RowBounds(), null, boundSql)
     }
 
-    fun getSqlSessionFactory(): SqlSessionFactory = SqlSessionFactoryBuilder().build(configuration)
+    private fun getSqlSessionFactory(): SqlSessionFactory = SqlSessionFactoryBuilder().build(configuration)
 
 }

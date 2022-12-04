@@ -1,10 +1,13 @@
 package com.hxl.miniapi.core
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.hxl.miniapi.core.convert.GsonConvert
 import com.hxl.miniapi.core.convert.HttpParameteLocalDateTimeTypeConverter
 import com.hxl.miniapi.core.convert.HttpParameterDateTypeConverter
 import com.hxl.miniapi.core.convert.HttpParameterLocalDateTypeConverter
+import com.hxl.miniapi.core.convert.gson.GsonLocalDateTimeTypeAdapter
+import com.hxl.miniapi.core.convert.gson.GsonLocalDateTypeAdapter
 import com.hxl.miniapi.core.io.FileResourceLoader
 import com.hxl.miniapi.core.io.JarResourceLoader
 import com.hxl.miniapi.core.resolver.request.*
@@ -30,6 +33,8 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 import java.net.URL
+import java.time.LocalDate
+import java.time.LocalDateTime
 import javax.sql.DataSource
 
 open class MiniContext : Context {
@@ -136,8 +141,13 @@ open class MiniContext : Context {
         function.invoke(miniKotlinApi)
     }
 
+    private fun createDefaultGson() = GsonBuilder()
+        .registerTypeAdapter(LocalDate::class.java, GsonLocalDateTypeAdapter())
+        .registerTypeAdapter(LocalDateTime::class.java, GsonLocalDateTimeTypeAdapter())
+        .setDateFormat("yyyy-MM-dd HH:mm:ss").create()
+
     override fun refresh(start: Class<*>) {
-        if (this.gson == null) this.gson = Gson()
+        if (this.gson == null) this.gson = createDefaultGson()
         if (this.jsonConvert == null) this.jsonConvert = GsonConvert(this.gson!!)
         val packageInfo = start.`package`
         val name = if (packageInfo == null) "" else packageInfo.name
