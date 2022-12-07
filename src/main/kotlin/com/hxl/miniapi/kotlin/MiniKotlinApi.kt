@@ -1,5 +1,7 @@
 package com.hxl.miniapi.kotlin
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.hxl.miniapi.core.MappingInfo
 import com.hxl.miniapi.core.MiniContext
 import com.hxl.miniapi.http.HttpMethod
@@ -58,5 +60,11 @@ class MiniKotlinApi(private val miniContext: MiniContext) {
         miniContext.addHttpIntercept(KotlinInterceptorWrapper(kotlinInterceptor.kotlinInterceptorHandlerContent))
             .includePathPatterns(kotlinInterceptor.includePatterns)
             .excludePathPatterns(kotlinInterceptor.excludePatterns)
+    }
+
+    fun gson(function: GsonBuilder.() -> Unit){
+        val gsonBuilder = GsonBuilder()
+        function.invoke(gsonBuilder)
+        miniContext.setGson(gsonBuilder.create())
     }
 }

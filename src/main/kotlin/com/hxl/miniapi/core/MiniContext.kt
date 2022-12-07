@@ -141,13 +141,13 @@ open class MiniContext : Context {
         function.invoke(miniKotlinApi)
     }
 
-    private fun createDefaultGson() = GsonBuilder()
+     private fun getDefaultGson(): Gson = GsonBuilder()
         .registerTypeAdapter(LocalDate::class.java, GsonLocalDateTypeAdapter())
         .registerTypeAdapter(LocalDateTime::class.java, GsonLocalDateTimeTypeAdapter())
         .setDateFormat("yyyy-MM-dd HH:mm:ss").create()
 
     override fun refresh(start: Class<*>) {
-        if (this.gson == null) this.gson = createDefaultGson()
+        if (this.gson == null) this.gson = getDefaultGson()
         if (this.jsonConvert == null) this.jsonConvert = GsonConvert(this.gson!!)
         val packageInfo = start.`package`
         val name = if (packageInfo == null) "" else packageInfo.name
